@@ -1,28 +1,25 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using S2_Quad;
 using UnityEngine;
 
 public class Quad
 {
-    public Mesh mesh = new Mesh();
+    public readonly Mesh mesh = new Mesh();
     public Quad(Block.EBlockSide side, Vector3 offset, BlockAtlasTile.EAtlasBlock tile)
     {
         mesh.name = "ScriptedCube";
 
-        Vector3[] vertices = new Vector3[4];
-        Vector3[] normals = new Vector3[4];
-        Vector2[] uvs = new Vector2[4];
-        int[] triangles = new int[6];
+        Vector3[] vertices;
+        Vector3[] normals;
+        Vector2[] uvs;
 
         BlockAtlasTile atlasUvs = new BlockAtlasTile(tile);
 
-        Vector2 uv00 = atlasUvs.uv00;//new Vector2(0, 0);
-        Vector2 uv10 = atlasUvs.uv01;//new Vector2(1, 0);
-        Vector2 uv01 = atlasUvs.uv10;//new Vector2(0, 1);
-        Vector2 uv11 = atlasUvs.uv11;//new Vector2(1, 1);
+        Vector2 uv00 = atlasUvs.uv00;
+        Vector2 uv10 = atlasUvs.uv01;
+        Vector2 uv01 = atlasUvs.uv10;
+        Vector2 uv11 = atlasUvs.uv11;
 
         Vector3 p0 = new Vector3(-0.5f, -0.5f, 0.5f);
         Vector3 p1 = new Vector3(0.5f, -0.5f, 0.5f);

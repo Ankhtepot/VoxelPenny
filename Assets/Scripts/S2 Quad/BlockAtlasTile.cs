@@ -22,7 +22,10 @@ namespace S2_Quad
         {
             WallSmallStones,
             Dirt,
-            GreenGrass,
+            GreenGrassTop,
+            GreenGrassSide,
+            Water,
+            Sand
         }
 
         public BlockAtlasTile(EAtlasBlock desiredBlock)
@@ -52,9 +55,12 @@ namespace S2_Quad
         {
             return new Dictionary<EAtlasBlock, Vector2Int>
             {
-                {EAtlasBlock.WallSmallStones, new Vector2Int(0, 16)},
-                {EAtlasBlock.Dirt, new Vector2Int(0, 2)},
-                {EAtlasBlock.GreenGrass, new Vector2Int(2, 6)}
+                {EAtlasBlock.WallSmallStones, new Vector2Int(0, 15)},
+                {EAtlasBlock.Dirt, new Vector2Int(2, 15)},
+                {EAtlasBlock.GreenGrassTop, new Vector2Int(2, 6)},
+                {EAtlasBlock.GreenGrassSide, new Vector2Int(3, 15)},
+                {EAtlasBlock.Water, new Vector2Int(15, 3)},
+                {EAtlasBlock.Sand, new Vector2Int(2, 5)},
             };
 
         }
