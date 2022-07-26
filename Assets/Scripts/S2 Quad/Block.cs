@@ -32,15 +32,16 @@ public class Block : MonoBehaviour
         MeshFilter mf = gameObject.AddComponent<MeshFilter>();
         MeshRenderer mr = gameObject.AddComponent<MeshRenderer>();
 
-
+        bool isTileConfigured = tileConfiguration != null;
+        
         Mesh[] q =
         {
-            new Quad(EBlockSide.Bottom, Vector3.zero, tileConfiguration != null ? tileConfiguration.bottomTile : tile).mesh,
-            new Quad(EBlockSide.Top, Vector3.zero, tileConfiguration != null ? tileConfiguration.topTile : tile).mesh,
-            new Quad(EBlockSide.Left, Vector3.zero, tileConfiguration != null ? tileConfiguration.leftTile : tile).mesh,
-            new Quad(EBlockSide.Right, Vector3.zero, tileConfiguration != null ? tileConfiguration.rightTile : tile).mesh,
-            new Quad(EBlockSide.Front, Vector3.zero, tileConfiguration != null ? tileConfiguration.frontTile : tile).mesh,
-            new Quad(EBlockSide.Back, Vector3.zero, tileConfiguration != null ? tileConfiguration.backTile : tile).mesh,
+            new Quad(EBlockSide.Bottom, Vector3.zero, isTileConfigured ? tileConfiguration.bottomTile : tile).mesh,
+            new Quad(EBlockSide.Top, Vector3.zero, isTileConfigured ? tileConfiguration.topTile : tile).mesh,
+            new Quad(EBlockSide.Left, Vector3.zero, isTileConfigured ? tileConfiguration.leftTile : tile).mesh,
+            new Quad(EBlockSide.Right, Vector3.zero, isTileConfigured ? tileConfiguration.rightTile : tile).mesh,
+            new Quad(EBlockSide.Front, Vector3.zero, isTileConfigured ? tileConfiguration.frontTile : tile).mesh,
+            new Quad(EBlockSide.Back, Vector3.zero, isTileConfigured ? tileConfiguration.backTile : tile).mesh,
         };
         
         transform.position = position;
