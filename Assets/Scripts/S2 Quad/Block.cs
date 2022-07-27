@@ -4,50 +4,30 @@ using System.Collections.Generic;
 using DefaultNamespace;
 using S2_Quad;
 using UnityEngine;
+using static MeshUtils;
 
-public class Block : MonoBehaviour
+public class Block
 {
     public Vector3 position;
-    public Material atlas;
-    public BlockAtlasTile.EAtlasBlock tile;
+    public Mesh mesh;
 
-    [Header("Override Tiles")] 
-    public TileConfiguration tileConfiguration;
+    private BlockAtlas.EBlockType _originTile;
 
-    private BlockAtlasTile.EAtlasBlock _originTile;
-    
-    [Serializable]
-    public enum EBlockSide
+    public Block(BlockAtlas.EBlockType tile, Vector3 offset, TileConfiguration tileConfiguration = null)
     {
-        Bottom,
-        Top,
-        Left,
-        Right,
-        Front,
-        Back,
-    }
-    
-    private void Start()
-    {
-        MeshFilter mf = gameObject.AddComponent<MeshFilter>();
-        MeshRenderer mr = gameObject.AddComponent<MeshRenderer>();
-
         bool isTileConfigured = tileConfiguration != null;
         
         Mesh[] q =
         {
-            new Quad(EBlockSide.Bottom, Vector3.zero, isTileConfigured ? tileConfiguration.bottomTile : tile).mesh,
-            new Quad(EBlockSide.Top, Vector3.zero, isTileConfigured ? tileConfiguration.topTile : tile).mesh,
-            new Quad(EBlockSide.Left, Vector3.zero, isTileConfigured ? tileConfiguration.leftTile : tile).mesh,
-            new Quad(EBlockSide.Right, Vector3.zero, isTileConfigured ? tileConfiguration.rightTile : tile).mesh,
-            new Quad(EBlockSide.Front, Vector3.zero, isTileConfigured ? tileConfiguration.frontTile : tile).mesh,
-            new Quad(EBlockSide.Back, Vector3.zero, isTileConfigured ? tileConfiguration.backTile : tile).mesh,
+            new Quad(EBlockSide.Bottom, offset, isTileConfigured ? tileConfiguration.bottomTile : tile).mesh,
+            new Quad(EBlockSide.Top, offset, isTileConfigured ? tileConfiguration.topTile : tile).mesh,
+            new Quad(EBlockSide.Left, offset, isTileConfigured ? tileConfiguration.leftTile : tile).mesh,
+            new Quad(EBlockSide.Right, offset, isTileConfigured ? tileConfiguration.rightTile : tile).mesh,
+            new Quad(EBlockSide.Front, offset, isTileConfigured ? tileConfiguration.frontTile : tile).mesh,
+            new Quad(EBlockSide.Back, offset, isTileConfigured ? tileConfiguration.backTile : tile).mesh,
         };
         
-        transform.position = position;
-        
-        mf.mesh = MeshUtils.MergeMeshes(q);
-        mf.mesh.name = $"Cube_{position.x}_{position.y}_{position.z}_generated";
-        mr.material = atlas;
+        mesh = MergeMeshes(q);
+        mesh.name = $"Cube_{position.x}_{position.y}_{position.z}_generated";
     }
 }

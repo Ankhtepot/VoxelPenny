@@ -2,11 +2,12 @@ using System;
 using System.Linq;
 using S2_Quad;
 using UnityEngine;
+using static MeshUtils;
 
 public class Quad
 {
     public readonly Mesh mesh = new Mesh();
-    public Quad(Block.EBlockSide side, Vector3 offset, BlockAtlasTile.EAtlasBlock tile)
+    public Quad(EBlockSide side, Vector3 offset, BlockAtlas.EBlockType tile)
     {
         mesh.name = "ScriptedCube";
 
@@ -14,7 +15,7 @@ public class Quad
         Vector3[] normals;
         Vector2[] uvs;
 
-        BlockAtlasTile atlasUvs = new BlockAtlasTile(tile);
+        BlockUVs atlasUvs = BlockAtlas.GetUVs(tile);
 
         Vector2 uv00 = atlasUvs.uv00;
         Vector2 uv10 = atlasUvs.uv01;
@@ -32,42 +33,42 @@ public class Quad
 
         switch (side)
         {
-            case Block.EBlockSide.Bottom:
+            case EBlockSide.Bottom:
             {
                 vertices = new[] {p0, p1, p2, p3};
                 normals = new[] {Vector3.down, Vector3.down, Vector3.down, Vector3.down};
                 uvs = new[] {uv11, uv01, uv00, uv10};
             }
                 break;
-            case Block.EBlockSide.Top:
+            case EBlockSide.Top:
             {
                 vertices = new[] {p7, p6, p5, p4};
                 normals = new[] {Vector3.up, Vector3.up, Vector3.up, Vector3.up};
                 uvs = new[] {uv11, uv01, uv00, uv10};
             }
                 break;
-            case Block.EBlockSide.Left:
+            case EBlockSide.Left:
             {
                 vertices = new[] {p7, p4, p0, p3};
                 normals = new[] {Vector3.left, Vector3.left, Vector3.left, Vector3.left};
                 uvs = new[] {uv11, uv01, uv00, uv10};
             }
                 break;
-            case Block.EBlockSide.Right:
+            case EBlockSide.Right:
             {
                 vertices = new[] {p5, p6, p2, p1};
                 normals = new[] {Vector3.right, Vector3.right, Vector3.right, Vector3.right};
                 uvs = new[] {uv11, uv01, uv00, uv10};
             }
                 break;
-            case Block.EBlockSide.Front:
+            case EBlockSide.Front:
             {
                 vertices = new[] {p4, p5, p1, p0};
                 normals = new[] {Vector3.forward, Vector3.forward, Vector3.forward, Vector3.forward};
                 uvs = new[] {uv11, uv01, uv00, uv10};
             }
                 break;
-            case Block.EBlockSide.Back:
+            case EBlockSide.Back:
             {
                 vertices = new[] {p6, p7, p3, p2};
                 normals = new[] {Vector3.back, Vector3.back, Vector3.back, Vector3.back};

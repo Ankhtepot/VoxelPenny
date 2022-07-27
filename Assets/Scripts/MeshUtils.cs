@@ -5,6 +5,16 @@ using VertexData = System.Tuple<UnityEngine.Vector3, UnityEngine.Vector3, UnityE
 
 public static class MeshUtils
 {
+    public enum EBlockSide
+    {
+        Bottom,
+        Top,
+        Left,
+        Right,
+        Front,
+        Back,
+    }
+    
     public static Mesh MergeMeshes(Mesh[] meshes)
     {
         Mesh mesh = new Mesh();
