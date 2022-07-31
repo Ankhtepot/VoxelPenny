@@ -1,5 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using VertexData = System.Tuple<UnityEngine.Vector3, UnityEngine.Vector3, UnityEngine.Vector2>;
 
@@ -15,7 +15,7 @@ public static class MeshUtils
         Back,
     }
     
-    public static Mesh MergeMeshes(Mesh[] meshes)
+    public static Mesh MergeMeshes(IEnumerable<Mesh> inputMeshes)
     {
         Mesh mesh = new Mesh();
 
@@ -24,16 +24,18 @@ public static class MeshUtils
         List<int> tris = new List<int>();
 
         int pIndex = 0;
-        
-        for (int i = 0; i < meshes.Length; i++)
-        {
-            if (meshes[i] == null) continue;
 
-            for (int j = 0; j < meshes[i].vertices.Length; j++)
+        List<Mesh> meshes = inputMeshes.ToList();
+        
+        for (int i = 0; i < meshes.Count; i++)
+        {
+            if (meshes.ElementAt(i) == null) continue;
+
+            for (int j = 0; j < meshes.ElementAt(i).vertices.Length; j++)
             {
-                Vector3 v = meshes[i].vertices[j];
-                Vector3 n = meshes[i].normals[j];
-                Vector2 u = meshes[i].uv[j];
+                Vector3 v = meshes.ElementAt(i).vertices[j];
+                Vector3 n = meshes.ElementAt(i).normals[j];
+                Vector2 u = meshes.ElementAt(i).uv[j];
                 VertexData p = new VertexData(v, n, u);
 
                 if (!pointsHash.Contains(p))
@@ -44,12 +46,12 @@ public static class MeshUtils
                 }
             }    
             
-            for (int t = 0; t < meshes[i].triangles.Length; t++)
+            for (int t = 0; t < meshes.ElementAt(i).triangles.Length; t++)
             {
-                int triPoint = meshes[i].triangles[t];
-                Vector3 v = meshes[i].vertices[triPoint];
-                Vector3 n = meshes[i].normals[triPoint];
-                Vector2 u = meshes[i].uv[triPoint];
+                int triPoint = meshes.ElementAt(i).triangles[t];
+                Vector3 v = meshes.ElementAt(i).vertices[triPoint];
+                Vector3 n = meshes.ElementAt(i).normals[triPoint];
+                Vector2 u = meshes.ElementAt(i).uv[triPoint];
                 VertexData p = new VertexData(v, n, u);
 
                 pointsOrder.TryGetValue(p, out int index);

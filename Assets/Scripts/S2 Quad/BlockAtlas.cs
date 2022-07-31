@@ -29,7 +29,8 @@ namespace S2_Quad
             GreenGrassTop,
             GreenGrassSide,
             Water,
-            Sand
+            Sand,
+            Air,
         }
 
         static BlockAtlas()
@@ -64,6 +65,7 @@ namespace S2_Quad
                 {EBlockType.Dirt, new Vector2Int(2, 15)},
                 {EBlockType.GreenGrassSide, new Vector2Int(3, 15)},
                 {EBlockType.Water, new Vector2Int(15, 3)},
+                {EBlockType.Air, new Vector2Int(12, 0)}
             };
         }
     }
