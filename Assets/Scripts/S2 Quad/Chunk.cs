@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using Unity.Burst;
-using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Jobs;
-using UnityEditor;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 using static S2_Quad.BlockAtlas;
+using Random = UnityEngine.Random;
 
 public class Chunk : MonoBehaviour
 {
@@ -15,6 +15,7 @@ public class Chunk : MonoBehaviour
     public int width;
     public int height;
     public int depth;
+    public float airRate = 0.5f;
 
     public Block[,,] blocks;
     // Flat[x + Width * (y + Depth * z)] = Original[x, y, z]
@@ -27,6 +28,12 @@ public class Chunk : MonoBehaviour
         chunkData = new EBlockType[_blockCount];
         for (int i = 0; i < _blockCount; i++)
         {
+            if (Random.Range(0f, 1.0f) > airRate)
+            {
+                chunkData[i] = EBlockType.GreenGrassTop;
+                continue;
+            }
+            
             chunkData[i] = EBlockType.Dirt;
         }
     }
@@ -88,11 +95,17 @@ public class Chunk : MonoBehaviour
             new VertexAttributeDescriptor(VertexAttribute.TexCoord0, stream: 2));
 
         JobHandle handle = jobs.Schedule(inputMeshes.Count, 4);
-        Mesh newMesh = new Mesh();
-        newMesh.name = "Chunk";
-        SubMeshDescriptor sm = new SubMeshDescriptor(0, triStart, MeshTopology.Triangles);
-        sm.firstVertex = 0;
-        sm.vertexCount = vertexStart;
+        
+        Mesh newMesh = new Mesh
+        {
+            name = "Chunk"
+        };
+        
+        SubMeshDescriptor sm = new SubMeshDescriptor(0, triStart, MeshTopology.Triangles)
+        {
+            firstVertex = 0,
+            vertexCount = vertexStart
+        };
 
         handle.Complete();
 
