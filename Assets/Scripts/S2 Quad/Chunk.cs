@@ -15,10 +15,18 @@ public class Chunk : MonoBehaviour
     public int width;
     public int height;
     public int depth;
-    public float airRate = 0.5f;
+    public int octaves = 8;
+    public float scale = 0.001f;
+    public float heightScale = 9.45f;
+    public float heightOffset;
 
     public Block[,,] blocks;
+    
     // Flat[x + Width * (y + Depth * z)] = Original[x, y, z]
+    // x = i % Width
+    // y = (i / Width) % Height
+    // z = i / (Width * Height)
+    
     public EBlockType[] chunkData;
 
     private int _blockCount;
@@ -28,9 +36,13 @@ public class Chunk : MonoBehaviour
         chunkData = new EBlockType[_blockCount];
         for (int i = 0; i < _blockCount; i++)
         {
-            if (Random.Range(0f, 1.0f) > airRate)
+            UnFlatten(i, out float x, out float y, out float z);
+            
+            float heightFromPerlin = MeshUtils.fBM(x, z, octaves, scale, heightScale, heightOffset);
+            
+            if (y > heightFromPerlin)
             {
-                chunkData[i] = EBlockType.GreenGrassTop;
+                chunkData[i] = EBlockType.Air;
                 continue;
             }
             
@@ -41,6 +53,13 @@ public class Chunk : MonoBehaviour
     private int FlattenXYZ(int x, int y, int z)
     {
         return x + width * (y + depth * z);
+    }
+
+    private void UnFlatten(int index, out float x, out float y, out float z)
+    {
+        x = index % width;
+        y = (index / width) % height;
+        z = index / (width * height);
     }
 
     private void Start()
