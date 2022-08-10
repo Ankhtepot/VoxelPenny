@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Unity.Burst;
 using Unity.Collections;
@@ -7,7 +6,6 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 using static S2_Quad.BlockAtlas;
-using Random = UnityEngine.Random;
 
 public class Chunk : MonoBehaviour
 {
@@ -33,11 +31,6 @@ public class Chunk : MonoBehaviour
     public EBlockType[] chunkData;
 
     private int _blockCount;
-
-    private void Start()
-    {
-        
-    }
 
     public void CreateChunk(Vector3 dimensions, Vector3 position)
     {
@@ -121,8 +114,6 @@ public class Chunk : MonoBehaviour
         newMesh.RecalculateBounds();
 
         mf.mesh = newMesh;
-
-        transform.position = location;
     }
     
     private void BuildChunk()
