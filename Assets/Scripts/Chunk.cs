@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Unity.Burst;
 using Unity.Collections;
@@ -10,15 +11,17 @@ using Random = UnityEngine.Random;
 
 public class Chunk : MonoBehaviour
 {
-    public Vector3 position;
+    public Vector3 location;
     public Material atlas;
+    [Header("Dimensions")]
     public int width;
     public int height;
     public int depth;
+    [Header("Perlin Noise Settings")]
     public int octaves = 8;
     public float scale = 0.001f;
-    public float heightScale = 9.45f;
-    public float heightOffset;
+    public float heightScale = 10f;
+    public float heightOffset = -33f;
 
     public Block[,,] blocks;
     
@@ -31,39 +34,18 @@ public class Chunk : MonoBehaviour
 
     private int _blockCount;
 
-    private void BuildChunk()
-    {
-        chunkData = new EBlockType[_blockCount];
-        for (int i = 0; i < _blockCount; i++)
-        {
-            UnFlatten(i, out float x, out float y, out float z);
-            
-            float heightFromPerlin = MeshUtils.fBM(x, z, octaves, scale, heightScale, heightOffset);
-            
-            if (y > heightFromPerlin)
-            {
-                chunkData[i] = EBlockType.Air;
-                continue;
-            }
-            
-            chunkData[i] = EBlockType.Dirt;
-        }
-    }
-
-    private int FlattenXYZ(int x, int y, int z)
-    {
-        return x + width * (y + depth * z);
-    }
-
-    private void UnFlatten(int index, out float x, out float y, out float z)
-    {
-        x = index % width;
-        y = (index / width) % height;
-        z = index / (width * height);
-    }
-
     private void Start()
     {
+        
+    }
+
+    public void CreateChunk(Vector3 dimensions, Vector3 position)
+    {
+        location = position;
+        width = (int) dimensions.x;
+        height = (int) dimensions.y;
+        depth = (int) dimensions.z;
+        
         MeshFilter mf = gameObject.AddComponent<MeshFilter>();
         MeshRenderer mr = gameObject.AddComponent<MeshRenderer>();
         mr.material = atlas;
@@ -87,7 +69,7 @@ public class Chunk : MonoBehaviour
             {
                 for (int x = 0; x < width; x++)
                 {
-                    blocks[x, y, z] = new Block(chunkData[FlattenXYZ(x, y, z)], new Vector3(x, y, z), this);
+                    blocks[x, y, z] = new Block(chunkData[FlattenXYZ(x, y, z)], new Vector3(x, y, z) + location, this);
                     Block currentBlock = blocks[x, y, z];
                     
                     if (!currentBlock.mesh) continue;
@@ -117,7 +99,7 @@ public class Chunk : MonoBehaviour
         
         Mesh newMesh = new Mesh
         {
-            name = "Chunk"
+            name = $"Chunk_{location.x}_{location.y}_{location.z}"
         };
         
         SubMeshDescriptor sm = new SubMeshDescriptor(0, triStart, MeshTopology.Triangles)
@@ -140,7 +122,38 @@ public class Chunk : MonoBehaviour
 
         mf.mesh = newMesh;
 
-        transform.position = position;
+        transform.position = location;
+    }
+    
+    private void BuildChunk()
+    {
+        chunkData = new EBlockType[_blockCount];
+        for (int i = 0; i < _blockCount; i++)
+        {
+            UnFlatten(i, out float x, out float y, out float z);
+            
+            float heightFromPerlin = MeshUtils.fBM(x, z, octaves, scale, heightScale, heightOffset);
+            
+            if (y > heightFromPerlin)
+            {
+                chunkData[i] = EBlockType.Air;
+                continue;
+            }
+            
+            chunkData[i] = EBlockType.Dirt;
+        }
+    }
+
+    private int FlattenXYZ(int x, int y, int z)
+    {
+        return x + width * (y + depth * z);
+    }
+
+    private void UnFlatten(int index, out float x, out float y, out float z)
+    {
+        x = index % width + location.x;
+        y = (index / width) % height + location.y;
+        z = index / (width * height) + location.z;
     }
 
     [BurstCompile]

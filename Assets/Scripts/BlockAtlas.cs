@@ -55,9 +55,8 @@ namespace S2_Quad
             return BlockUVs;
         }
 
-        private static Dictionary<EBlockType, Vector2Int> BuildMap()
-        {
-            return new Dictionary<EBlockType, Vector2Int>
+        private static Dictionary<EBlockType, Vector2Int> BuildMap() =>
+            new Dictionary<EBlockType, Vector2Int>
             {
                 {EBlockType.WallSmallStones, new Vector2Int(0, 15)},
                 {EBlockType.GreenGrassTop, new Vector2Int(2, 6)},
@@ -67,6 +66,5 @@ namespace S2_Quad
                 {EBlockType.Water, new Vector2Int(15, 3)},
                 {EBlockType.Air, new Vector2Int(12, 0)}
             };
-        }
     }
 }
