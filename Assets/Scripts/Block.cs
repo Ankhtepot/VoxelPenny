@@ -11,7 +11,7 @@ public class Block
     public readonly Mesh mesh;
     private readonly Chunk _parentChunk;
     
-    private readonly List<EBlockType> _ignoredNeighbourTypes = new List<EBlockType> {EBlockType.Air, EBlockType.Water};
+    private readonly List<EBlockType> _ignoredNeighbourTypes = new() {EBlockType.Air, EBlockType.Water};
 
     public Block(EBlockType type, Vector3 offset, Chunk chunk, TileConfiguration tileConfiguration = null)
     {
@@ -20,36 +20,36 @@ public class Block
 
         if (type == EBlockType.Air) return;
         
-        List<Mesh> quads = new List<Mesh>();
-        bool isTileConfigured = tileConfiguration != null;
+        List<Mesh> quads = new();
+        bool isTileConfigured = tileConfiguration;
         if (!HasSolidNeighbour(blockLocalPos.x, blockLocalPos.y - 1, blockLocalPos.z))
         {
-            quads.Add(new Quad(EBlockSide.Bottom, offset, isTileConfigured ? tileConfiguration.bottomTile : type).mesh);
+            quads.Add(new Quad(EBlockSide.Bottom, offset, isTileConfigured ? tileConfiguration!.bottomTile : type).mesh);
         }
 
         if (!HasSolidNeighbour(blockLocalPos.x, blockLocalPos.y + 1, blockLocalPos.z))
         {
-            quads.Add(new Quad(EBlockSide.Top, offset, isTileConfigured ? tileConfiguration.bottomTile : type).mesh);
+            quads.Add(new Quad(EBlockSide.Top, offset, isTileConfigured ? tileConfiguration!.topTile : type).mesh);
         }
 
         if (!HasSolidNeighbour(blockLocalPos.x - 1, blockLocalPos.y, blockLocalPos.z))
         {
-            quads.Add(new Quad(EBlockSide.Left, offset, isTileConfigured ? tileConfiguration.bottomTile : type).mesh);
+            quads.Add(new Quad(EBlockSide.Left, offset, isTileConfigured ? tileConfiguration!.leftTile : type).mesh);
         }
 
         if (!HasSolidNeighbour(blockLocalPos.x + 1, blockLocalPos.y, blockLocalPos.z))
         {
-            quads.Add(new Quad(EBlockSide.Right, offset, isTileConfigured ? tileConfiguration.bottomTile : type).mesh);
+            quads.Add(new Quad(EBlockSide.Right, offset, isTileConfigured ? tileConfiguration!.rightTile : type).mesh);
         }
 
         if (!HasSolidNeighbour(blockLocalPos.x, blockLocalPos.y, blockLocalPos.z + 1))
         {
-            quads.Add(new Quad(EBlockSide.Front, offset, isTileConfigured ? tileConfiguration.bottomTile : type).mesh);
+            quads.Add(new Quad(EBlockSide.Front, offset, isTileConfigured ? tileConfiguration!.frontTile : type).mesh);
         }
 
         if (!HasSolidNeighbour(blockLocalPos.x, blockLocalPos.y, blockLocalPos.z - 1))
         {
-            quads.Add(new Quad(EBlockSide.Back, offset, isTileConfigured ? tileConfiguration.bottomTile : type).mesh);
+            quads.Add(new Quad(EBlockSide.Back, offset, isTileConfigured ? tileConfiguration!.backTile : type).mesh);
         }
 
         if (quads.Count == 0) return;

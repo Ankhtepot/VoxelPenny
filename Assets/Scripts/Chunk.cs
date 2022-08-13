@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DefaultNamespace;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -11,6 +12,7 @@ public class Chunk : MonoBehaviour
 {
     public Vector3 location;
     public Material atlas;
+    public TileConfiguration grassConfiguration;
     [Header("Dimensions")]
     public int width;
     public int height;
@@ -46,11 +48,11 @@ public class Chunk : MonoBehaviour
         blocks = new Block[width, height, depth];
         BuildChunk();
 
-        List<Mesh> inputMeshes = new List<Mesh>();
+        List<Mesh> inputMeshes = new();
         int vertexStart = 0;
         int triStart = 0;
         int blocksCounter = 0;
-        ProcessMeshDataJob jobs = new ProcessMeshDataJob
+        ProcessMeshDataJob jobs = new()
         {
             vertexStart = new NativeArray<int>(_blockCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory),
             triStart = new NativeArray<int>(_blockCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory)
@@ -62,7 +64,15 @@ public class Chunk : MonoBehaviour
             {
                 for (int x = 0; x < width; x++)
                 {
-                    blocks[x, y, z] = new Block(chunkData[FlattenXYZ(x, y, z)], new Vector3(x, y, z) + location, this);
+                    EBlockType blockType = chunkData[FlattenXYZ(x, y, z)];
+                    
+                    blocks[x, y, z] = new Block(
+                        blockType,
+                        new Vector3(x, y, z) + location,
+                        this,
+                        blockType == EBlockType.GreenGrassTop ? grassConfiguration : null
+                        );
+                    
                     Block currentBlock = blocks[x, y, z];
                     
                     if (!currentBlock.mesh) continue;
@@ -90,12 +100,12 @@ public class Chunk : MonoBehaviour
 
         JobHandle handle = jobs.Schedule(inputMeshes.Count, 4);
         
-        Mesh newMesh = new Mesh
+        Mesh newMesh = new()
         {
             name = $"Chunk_{location.x}_{location.y}_{location.z}"
         };
         
-        SubMeshDescriptor sm = new SubMeshDescriptor(0, triStart, MeshTopology.Triangles)
+        SubMeshDescriptor sm = new(0, triStart, MeshTopology.Triangles)
         {
             firstVertex = 0,
             vertexCount = vertexStart
@@ -114,6 +124,8 @@ public class Chunk : MonoBehaviour
         newMesh.RecalculateBounds();
 
         mf.mesh = newMesh;
+        MeshCollider collider = gameObject.AddComponent<MeshCollider>();
+        collider.sharedMesh = mf.mesh;
     }
     
     private void BuildChunk()
@@ -124,7 +136,11 @@ public class Chunk : MonoBehaviour
             UnFlatten(i, out float x, out float y, out float z);
             
             float heightFromPerlin = MeshUtils.fBM(x, z, octaves, scale, heightScale, heightOffset);
-            
+            if ((int)y == (int)heightFromPerlin)
+            {
+                chunkData[i] = EBlockType.GreenGrassTop;
+                continue;
+            }
             if (y > heightFromPerlin)
             {
                 chunkData[i] = EBlockType.Air;
@@ -161,16 +177,13 @@ public class Chunk : MonoBehaviour
             int vCount = data.vertexCount;
             int vStart = vertexStart[index];
 
-            NativeArray<float3> verts =
-                new NativeArray<float3>(vCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+            NativeArray<float3> verts = new(vCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
             data.GetVertices(verts.Reinterpret<Vector3>());
 
-            NativeArray<float3> normals =
-                new NativeArray<float3>(vCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+            NativeArray<float3> normals = new(vCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
             data.GetVertices(normals.Reinterpret<Vector3>());
 
-            NativeArray<float3> uvs =
-                new NativeArray<float3>(vCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+            NativeArray<float3> uvs = new(vCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
             data.GetUVs(0, uvs.Reinterpret<Vector3>());
 
             NativeArray<Vector3> outputVerts = outputMesh.GetVertexData<Vector3>();
