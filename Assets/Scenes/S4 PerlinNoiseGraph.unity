@@ -464,6 +464,11 @@ MonoBehaviour:
   mCamera: {fileID: 737642193}
   fpc: {fileID: 1259757676}
   loadingBar: {fileID: 757390023}
+  perlinNoiseSettings:
+    Octaves: 8
+    Scale: 0.001
+    HeightOffset: -16
+    HeightScale: 10
 --- !u!4 &533708457
 Transform:
   m_ObjectHideFlags: 0

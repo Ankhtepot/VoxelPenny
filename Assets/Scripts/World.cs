@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using Scripts;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,6 +14,7 @@ namespace DefaultNamespace
         public GameObject mCamera;
         public GameObject fpc;
         public Slider loadingBar;
+        public PerlinNoiseSettings perlinNoiseSettings;
 
         private void Start()
         {
@@ -24,6 +26,7 @@ namespace DefaultNamespace
         private IEnumerator BuildWorld()
         {
             mCamera.SetActive(true);
+            loadingBar.gameObject.SetActive(true);
             fpc.SetActive(false);
             
             for (int z = 0; z < worldDimensions.z; z++)
@@ -34,7 +37,9 @@ namespace DefaultNamespace
                     {
                         GameObject chunk = Instantiate(chunkPrefab, transform, true);
                         Vector3 position = new(chunkDimensions.x * x, chunkDimensions.y * y, chunkDimensions.z * z);
-                        chunk.GetComponent<Chunk>().CreateChunk(chunkDimensions, position);
+                        Chunk chunkComponent = chunk.GetComponent<Chunk>();
+                        chunkComponent.perlinNoiseSettings = perlinNoiseSettings;
+                        chunkComponent.CreateChunk(chunkDimensions, position);
                         loadingBar.value += 1;
                         yield return null;
                     }
@@ -43,6 +48,12 @@ namespace DefaultNamespace
             
             mCamera.SetActive(false);
             loadingBar.gameObject.SetActive(false);
+
+            float xpos = (chunkDimensions.x * worldDimensions.x) / 2f;
+            float zpos = (chunkDimensions.z * worldDimensions.z) / 2f;
+            float ypos = MeshUtils.fBM(xpos, zpos, perlinNoiseSettings) + 1;
+
+            fpc.transform.position = new Vector3(xpos, ypos, zpos);
             fpc.SetActive(true);
         }
     }

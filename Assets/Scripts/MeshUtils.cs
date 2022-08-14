@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Scripts;
 using UnityEngine;
 using VertexData = System.Tuple<UnityEngine.Vector3, UnityEngine.Vector3, UnityEngine.Vector2>;
 
@@ -14,7 +15,7 @@ public static class MeshUtils
         Front,
         Back,
     }
-    
+
     public static Mesh MergeMeshes(IEnumerable<Mesh> inputMeshes)
     {
         Mesh mesh = new Mesh();
@@ -26,7 +27,7 @@ public static class MeshUtils
         int pIndex = 0;
 
         List<Mesh> meshes = inputMeshes.ToList();
-        
+
         for (int i = 0; i < meshes.Count; i++)
         {
             if (meshes.ElementAt(i) == null) continue;
@@ -44,8 +45,8 @@ public static class MeshUtils
                     pointsHash.Add(p);
                     pIndex++;
                 }
-            }    
-            
+            }
+
             for (int t = 0; t < meshes.ElementAt(i).triangles.Length; t++)
             {
                 int triPoint = meshes.ElementAt(i).triangles[t];
@@ -60,7 +61,7 @@ public static class MeshUtils
 
             meshes[i] = null;
         }
-        
+
         ExtractArrays(pointsOrder, mesh);
         mesh.triangles = tris.ToArray();
         mesh.RecalculateBounds();
@@ -84,12 +85,18 @@ public static class MeshUtils
         mesh.normals = norms.ToArray();
         mesh.uv = uvs.ToArray();
     }
-    
-    public static float fBM(float x, float z, int octaves, float scale, float heightScale, float heightOffset) // finite Brownian Motion
+
+    public static float fBM(float x, float z, PerlinNoiseSettings pns) // finite Brownian Motion
+    {
+        return fBM(x, z, pns.Octaves, pns.Scale, pns.HeightScale, pns.HeightOffset);
+    }
+
+    public static float
+        fBM(float x, float z, int octaves, float scale, float heightScale, float heightOffset) // finite Brownian Motion
     {
         float total = 0;
         float frequency = 1;
-        
+
         for (int i = 0; i < octaves; i++)
         {
             total += Mathf.PerlinNoise(x * scale * frequency, z * scale * frequency) * heightScale;

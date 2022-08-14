@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DefaultNamespace;
+using Scripts;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -13,15 +14,10 @@ public class Chunk : MonoBehaviour
     public Vector3 location;
     public Material atlas;
     public TileConfiguration grassConfiguration;
-    [Header("Dimensions")]
-    public int width;
-    public int height;
-    public int depth;
-    [Header("Perlin Noise Settings")]
-    public int octaves = 8;
-    public float scale = 0.001f;
-    public float heightScale = 10f;
-    public float heightOffset = -33f;
+    [HideInInspector] public int width;
+    [HideInInspector] public int height;
+    [HideInInspector] public int depth;
+    [HideInInspector] public PerlinNoiseSettings perlinNoiseSettings;
 
     public Block[,,] blocks;
     
@@ -124,8 +120,8 @@ public class Chunk : MonoBehaviour
         newMesh.RecalculateBounds();
 
         mf.mesh = newMesh;
-        MeshCollider collider = gameObject.AddComponent<MeshCollider>();
-        collider.sharedMesh = mf.mesh;
+        MeshCollider myCollider = gameObject.AddComponent<MeshCollider>();
+        myCollider.sharedMesh = mf.mesh;
     }
     
     private void BuildChunk()
@@ -135,7 +131,7 @@ public class Chunk : MonoBehaviour
         {
             UnFlatten(i, out float x, out float y, out float z);
             
-            float heightFromPerlin = MeshUtils.fBM(x, z, octaves, scale, heightScale, heightOffset);
+            float heightFromPerlin = MeshUtils.fBM(x, z, perlinNoiseSettings);
             if ((int)y == (int)heightFromPerlin)
             {
                 chunkData[i] = EBlockType.GreenGrassTop;

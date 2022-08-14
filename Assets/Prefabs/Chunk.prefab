@@ -50,8 +50,9 @@ MonoBehaviour:
   width: 10
   height: 10
   depth: 10
-  octaves: 8
-  scale: 0.001
-  heightScale: 10
-  heightOffset: -18
+  perlinNoiseSettings:
+    Octaves: 8
+    Scale: 0.001
+    HeightOffset: -16
+    HeightScale: 10
   chunkData: 
