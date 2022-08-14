@@ -17,7 +17,7 @@ public class Chunk : MonoBehaviour
     [HideInInspector] public int width;
     [HideInInspector] public int height;
     [HideInInspector] public int depth;
-    [HideInInspector] public PerlinNoiseSettings perlinNoiseSettings;
+    [HideInInspector] public PerlinNoiseSettings surfaceLayer;
 
     public Block[,,] blocks;
 
@@ -137,14 +137,22 @@ public class Chunk : MonoBehaviour
         {
             UnFlatten(i, out float x, out float y, out float z);
 
-            float heightFromPerlin = MeshUtils.fBM(x, z, perlinNoiseSettings);
-            if ((int) y == (int) heightFromPerlin)
+            PerlinNoiseSettings stonesLayer = World.StonesPerlinNoise;
+            float heightForSurface = MeshUtils.fBM(x, z, surfaceLayer);
+            float heightForStones = MeshUtils.fBM(x, z, stonesLayer);
+            if ((int) y == (int) heightForSurface)
             {
                 chunkData[i] = EBlockType.ConfiguredGrassCube;
                 continue;
             }
 
-            if (y > heightFromPerlin)
+            if (y < MeshUtils.fBM(x, z, stonesLayer))
+            {
+                chunkData[i] = EBlockType.WallSmallStones;
+                continue;
+            }
+            
+            if (y > heightForSurface)
             {
                 chunkData[i] = EBlockType.Air;
                 continue;

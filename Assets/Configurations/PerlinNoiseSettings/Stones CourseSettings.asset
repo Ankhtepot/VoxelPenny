@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1298b290ee6346afb55d1ed1d6542b91, type: 3}
-  m_Name: CourseSettings Second Layer
+  m_Name: Stones CourseSettings
   m_EditorClassIdentifier: 
   Octaves: 8
   Scale: 0.001
-  HeightOffset: -27.77
+  HeightOffset: -16
   HeightScale: 10

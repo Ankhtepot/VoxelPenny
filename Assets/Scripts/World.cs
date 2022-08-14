@@ -14,7 +14,16 @@ namespace DefaultNamespace
         public GameObject mCamera;
         public GameObject fpc;
         public Slider loadingBar;
-        public PerlinNoiseSettings perlinNoiseSettings;
+        public float probability;
+        [Header("Layers")]
+        public PerlinNoiseSettings surfacePerlinNoise;
+        public PerlinNoiseSettings stonesPerlinNoise;
+        public static PerlinNoiseSettings StonesPerlinNoise;
+
+        private void Awake()
+        {
+            StonesPerlinNoise = stonesPerlinNoise;
+        }
 
         private void Start()
         {
@@ -38,7 +47,7 @@ namespace DefaultNamespace
                         GameObject chunk = Instantiate(chunkPrefab, transform, true);
                         Vector3 position = new(chunkDimensions.x * x, chunkDimensions.y * y, chunkDimensions.z * z);
                         Chunk chunkComponent = chunk.GetComponent<Chunk>();
-                        chunkComponent.perlinNoiseSettings = perlinNoiseSettings;
+                        chunkComponent.surfaceLayer = surfacePerlinNoise;
                         chunkComponent.CreateChunk(chunkDimensions, position);
                         loadingBar.value += 1;
                         yield return null;
@@ -51,7 +60,7 @@ namespace DefaultNamespace
 
             float xpos = (chunkDimensions.x * worldDimensions.x) / 2f;
             float zpos = (chunkDimensions.z * worldDimensions.z) / 2f;
-            float ypos = MeshUtils.fBM(xpos, zpos, perlinNoiseSettings) + 1;
+            float ypos = MeshUtils.fBM(xpos, zpos, surfacePerlinNoise) + 1;
 
             fpc.transform.position = new Vector3(xpos, ypos, zpos);
             fpc.SetActive(true);

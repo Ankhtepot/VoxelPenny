@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b2652c0ebdfe467b85b1cef0eb859bca, type: 3}
   m_Name: Grass
   m_EditorClassIdentifier: 
-  topTile: 2
-  bottomTile: 1
-  leftTile: 3
-  rightTile: 3
-  frontTile: 3
-  backTile: 3
+  topTile: 13
+  bottomTile: 12
+  leftTile: 14
+  rightTile: 14
+  frontTile: 14
+  backTile: 14

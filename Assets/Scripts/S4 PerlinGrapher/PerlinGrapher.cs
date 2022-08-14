@@ -10,8 +10,9 @@ public class PerlinGrapher : MonoBehaviour
     
     public float heightOffset;
     public float heightScale = 2f;
-    public float scale = 0.5f;
+    [Range(0f, 1f)]public float scale = 0.5f;
     public int octaves = 1;
+    [Range(0f, 1f)]public float probability;
 
     private void Awake()
     {
@@ -19,6 +20,7 @@ public class PerlinGrapher : MonoBehaviour
         octaves = perlinNoiseSettings.Octaves;
         heightOffset = perlinNoiseSettings.HeightOffset;
         heightScale = perlinNoiseSettings.HeightScale;
+        probability = perlinNoiseSettings.Probability;
     }
 
     private void Start()
@@ -48,6 +50,7 @@ public class PerlinGrapher : MonoBehaviour
         perlinNoiseSettings.Scale = scale;
         perlinNoiseSettings.HeightOffset = heightOffset;
         perlinNoiseSettings.HeightScale = heightScale;
+        perlinNoiseSettings.Probability = probability;
         Graph();
     }
 }
