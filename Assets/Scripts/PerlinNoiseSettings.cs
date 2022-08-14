@@ -1,21 +1,13 @@
-﻿using System;
+﻿using UnityEngine;
 
 namespace Scripts
 {
-    [Serializable]
-    public class PerlinNoiseSettings
+    [CreateAssetMenu(menuName = "Scriptable Objects/Perlin Noise Setting", fileName = "PerlinNoiseSetting")]
+    public class PerlinNoiseSettings : ScriptableObject
     {
         public int Octaves;
         public float Scale;
         public float HeightOffset;
         public float HeightScale;
-
-        public PerlinNoiseSettings(int octaves, float scale, float heightOffset, float heightScale)
-        {
-            Octaves = octaves;
-            Scale = scale;
-            HeightOffset = heightOffset;
-            HeightScale = heightScale;
-        }
     }
 }

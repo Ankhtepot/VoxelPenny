@@ -6,7 +6,7 @@ using static MeshUtils;
 
 public class Quad
 {
-    public readonly Mesh mesh = new Mesh();
+    public readonly Mesh mesh = new();
     public Quad(EBlockSide side, Vector3 offset, BlockAtlas.EBlockType tile)
     {
         mesh.name = "ScriptedCube";

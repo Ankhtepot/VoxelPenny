@@ -24,13 +24,15 @@ namespace S2_Quad
         [Serializable]
         public enum EBlockType
         {
-            WallSmallStones,
-            Dirt,
-            GreenGrassTop,
-            GreenGrassSide,
-            Water,
-            Sand,
-            Air,
+            ConfiguredGrassCube = 0,
+            ConfiguredSandCube = 1,
+            WallSmallStones = 11,
+            Dirt = 12,
+            GreenGrassTop = 13,
+            GreenGrassSide = 14,
+            Water = 15,
+            Sand = 16,
+            Air = 17,
         }
 
         static BlockAtlas()
@@ -56,7 +58,7 @@ namespace S2_Quad
         }
 
         private static Dictionary<EBlockType, Vector2Int> BuildMap() =>
-            new Dictionary<EBlockType, Vector2Int>
+            new()
             {
                 {EBlockType.WallSmallStones, new Vector2Int(0, 15)},
                 {EBlockType.GreenGrassTop, new Vector2Int(2, 6)},
@@ -64,7 +66,7 @@ namespace S2_Quad
                 {EBlockType.Dirt, new Vector2Int(2, 15)},
                 {EBlockType.GreenGrassSide, new Vector2Int(3, 15)},
                 {EBlockType.Water, new Vector2Int(15, 3)},
-                {EBlockType.Air, new Vector2Int(12, 0)}
+                {EBlockType.Air, new Vector2Int(12, 0)},
             };
     }
 }

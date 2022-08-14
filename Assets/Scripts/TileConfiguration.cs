@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DefaultNamespace
 {
-    [CreateAssetMenu(fileName = "Tile Configuration", menuName = "ScriptableObjects/TileConfiguration")]
+    [CreateAssetMenu(fileName = "Tile Configuration", menuName = "Scriptable Objects/Tile Configuration")]
     public class TileConfiguration : ScriptableObject
     {
         public BlockAtlas.EBlockType topTile;

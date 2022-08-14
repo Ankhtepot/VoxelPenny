@@ -20,12 +20,12 @@ public class Chunk : MonoBehaviour
     [HideInInspector] public PerlinNoiseSettings perlinNoiseSettings;
 
     public Block[,,] blocks;
-    
+
     // Flat[x + Width * (y + Depth * z)] = Original[x, y, z]
     // x = i % Width
     // y = (i / Width) % Height
     // z = i / (Width * Height)
-    
+
     public EBlockType[] chunkData;
 
     private int _blockCount;
@@ -36,7 +36,7 @@ public class Chunk : MonoBehaviour
         width = (int) dimensions.x;
         height = (int) dimensions.y;
         depth = (int) dimensions.z;
-        
+
         MeshFilter mf = gameObject.AddComponent<MeshFilter>();
         MeshRenderer mr = gameObject.AddComponent<MeshRenderer>();
         mr.material = atlas;
@@ -61,18 +61,24 @@ public class Chunk : MonoBehaviour
                 for (int x = 0; x < width; x++)
                 {
                     EBlockType blockType = chunkData[FlattenXYZ(x, y, z)];
-                    
+
+                    TileConfiguration configuration = blockType switch
+                    {
+                        EBlockType.ConfiguredGrassCube => grassConfiguration,
+                        _ => null
+                    };
+
                     blocks[x, y, z] = new Block(
                         blockType,
                         new Vector3(x, y, z) + location,
                         this,
-                        blockType == EBlockType.GreenGrassTop ? grassConfiguration : null
-                        );
-                    
+                        configuration
+                    );
+
                     Block currentBlock = blocks[x, y, z];
-                    
+
                     if (!currentBlock.mesh) continue;
-                    
+
                     inputMeshes.Add(currentBlock.mesh);
                     int vCount = currentBlock.mesh.vertexCount;
                     int iCount = (int) currentBlock.mesh.GetIndexCount(0);
@@ -95,12 +101,12 @@ public class Chunk : MonoBehaviour
             new VertexAttributeDescriptor(VertexAttribute.TexCoord0, stream: 2));
 
         JobHandle handle = jobs.Schedule(inputMeshes.Count, 4);
-        
+
         Mesh newMesh = new()
         {
             name = $"Chunk_{location.x}_{location.y}_{location.z}"
         };
-        
+
         SubMeshDescriptor sm = new(0, triStart, MeshTopology.Triangles)
         {
             firstVertex = 0,
@@ -123,26 +129,27 @@ public class Chunk : MonoBehaviour
         MeshCollider myCollider = gameObject.AddComponent<MeshCollider>();
         myCollider.sharedMesh = mf.mesh;
     }
-    
+
     private void BuildChunk()
     {
         chunkData = new EBlockType[_blockCount];
         for (int i = 0; i < _blockCount; i++)
         {
             UnFlatten(i, out float x, out float y, out float z);
-            
+
             float heightFromPerlin = MeshUtils.fBM(x, z, perlinNoiseSettings);
-            if ((int)y == (int)heightFromPerlin)
+            if ((int) y == (int) heightFromPerlin)
             {
-                chunkData[i] = EBlockType.GreenGrassTop;
+                chunkData[i] = EBlockType.ConfiguredGrassCube;
                 continue;
             }
+
             if (y > heightFromPerlin)
             {
                 chunkData[i] = EBlockType.Air;
                 continue;
             }
-            
+
             chunkData[i] = EBlockType.Dirt;
         }
     }
