@@ -8,6 +8,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 using static S2_Quad.BlockAtlas;
+using Random = UnityEngine.Random;
 
 public class Chunk : MonoBehaviour
 {
@@ -17,7 +18,6 @@ public class Chunk : MonoBehaviour
     [HideInInspector] public int width;
     [HideInInspector] public int height;
     [HideInInspector] public int depth;
-    [HideInInspector] public PerlinNoiseSettings surfaceLayer;
 
     public Block[,,] blocks;
 
@@ -137,16 +137,16 @@ public class Chunk : MonoBehaviour
         {
             UnFlatten(i, out float x, out float y, out float z);
 
-            PerlinNoiseSettings stonesLayer = World.StonesPerlinNoise;
-            float heightForSurface = MeshUtils.fBM(x, z, surfaceLayer);
-            float heightForStones = MeshUtils.fBM(x, z, stonesLayer);
+            float heightForSurface = MeshUtils.fBM(x, z, World.SurfacePerlinNoise);
+            float heightForStones = MeshUtils.fBM(x, z, World.StonesPerlinNoise);
+            
             if ((int) y == (int) heightForSurface)
             {
                 chunkData[i] = EBlockType.ConfiguredGrassCube;
                 continue;
             }
 
-            if (y < MeshUtils.fBM(x, z, stonesLayer))
+            if (y < heightForStones && Random.Range(0f, 1f) < World.StonesPerlinNoise.Probability)
             {
                 chunkData[i] = EBlockType.WallSmallStones;
                 continue;

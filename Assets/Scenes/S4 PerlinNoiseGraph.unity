@@ -466,7 +466,6 @@ MonoBehaviour:
   mCamera: {fileID: 737642193}
   fpc: {fileID: 1259757676}
   loadingBar: {fileID: 757390023}
-  probability: 0
   surfacePerlinNoise: {fileID: 11400000, guid: cafa4d93afa666846b842ba986e7401d, type: 2}
   stonesPerlinNoise: {fileID: 11400000, guid: 61093ee74085b074aa3290cc30a251b7, type: 2}
 --- !u!4 &533708457
@@ -1107,7 +1106,7 @@ MonoBehaviour:
   heightScale: 10
   scale: 0.001
   octaves: 8
-  probability: 0
+  probability: 0.1
 --- !u!4 &1494200260
 Transform:
   m_ObjectHideFlags: 0

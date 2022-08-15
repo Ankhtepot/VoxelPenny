@@ -14,14 +14,15 @@ namespace DefaultNamespace
         public GameObject mCamera;
         public GameObject fpc;
         public Slider loadingBar;
-        public float probability;
         [Header("Layers")]
         public PerlinNoiseSettings surfacePerlinNoise;
+        public static PerlinNoiseSettings SurfacePerlinNoise;
         public PerlinNoiseSettings stonesPerlinNoise;
         public static PerlinNoiseSettings StonesPerlinNoise;
 
         private void Awake()
         {
+            SurfacePerlinNoise = surfacePerlinNoise;
             StonesPerlinNoise = stonesPerlinNoise;
         }
 
@@ -47,7 +48,6 @@ namespace DefaultNamespace
                         GameObject chunk = Instantiate(chunkPrefab, transform, true);
                         Vector3 position = new(chunkDimensions.x * x, chunkDimensions.y * y, chunkDimensions.z * z);
                         Chunk chunkComponent = chunk.GetComponent<Chunk>();
-                        chunkComponent.surfaceLayer = surfacePerlinNoise;
                         chunkComponent.CreateChunk(chunkDimensions, position);
                         loadingBar.value += 1;
                         yield return null;
