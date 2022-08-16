@@ -139,19 +139,27 @@ public class Chunk : MonoBehaviour
 
             float heightForSurface = MeshUtils.fBM(x, z, World.SurfacePerlinNoise);
             float heightForStones = MeshUtils.fBM(x, z, World.StonesPerlinNoise);
-            
+            float heightForDiamondTop = MeshUtils.fBM(x, z, World.DiamondTopPerlinNoise);
+            float heightForDiamondBottom = MeshUtils.fBM(x, z, World.DiamondBottomPerlinNoise);
+
             if ((int) y == (int) heightForSurface)
             {
                 chunkData[i] = EBlockType.ConfiguredGrassCube;
                 continue;
             }
 
-            if (y < heightForStones && Random.Range(0f, 1f) < World.StonesPerlinNoise.Probability)
+            if (y >= heightForDiamondBottom && y <= heightForDiamondTop && Random.Range(0f, 1f) <= World.DiamondTopPerlinNoise.Probability)
+            {
+                chunkData[i] = EBlockType.Diamond;
+                continue;
+            }
+
+            if (y < heightForStones && Random.Range(0f, 1f) <= World.StonesPerlinNoise.Probability)
             {
                 chunkData[i] = EBlockType.WallSmallStones;
                 continue;
             }
-            
+
             if (y > heightForSurface)
             {
                 chunkData[i] = EBlockType.Air;

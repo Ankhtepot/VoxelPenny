@@ -19,11 +19,17 @@ namespace DefaultNamespace
         public static PerlinNoiseSettings SurfacePerlinNoise;
         public PerlinNoiseSettings stonesPerlinNoise;
         public static PerlinNoiseSettings StonesPerlinNoise;
+        public PerlinNoiseSettings diamondTopPerlinNoise;
+        public static PerlinNoiseSettings DiamondTopPerlinNoise;
+        public PerlinNoiseSettings diamondBottomPerlinNoise;
+        public static PerlinNoiseSettings DiamondBottomPerlinNoise;
 
         private void Awake()
         {
             SurfacePerlinNoise = surfacePerlinNoise;
             StonesPerlinNoise = stonesPerlinNoise;
+            DiamondTopPerlinNoise = diamondTopPerlinNoise;
+            DiamondBottomPerlinNoise = diamondBottomPerlinNoise;
         }
 
         private void Start()
