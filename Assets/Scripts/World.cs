@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using Scripts;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,23 +15,9 @@ namespace DefaultNamespace
         public GameObject mCamera;
         public GameObject fpc;
         public Slider loadingBar;
-        [Header("Layers")]
-        public PerlinNoiseSettings surfacePerlinNoise;
-        public static PerlinNoiseSettings SurfacePerlinNoise;
-        public PerlinNoiseSettings stonesPerlinNoise;
-        public static PerlinNoiseSettings StonesPerlinNoise;
-        public PerlinNoiseSettings diamondTopPerlinNoise;
-        public static PerlinNoiseSettings DiamondTopPerlinNoise;
-        public PerlinNoiseSettings diamondBottomPerlinNoise;
-        public static PerlinNoiseSettings DiamondBottomPerlinNoise;
 
-        private void Awake()
-        {
-            SurfacePerlinNoise = surfacePerlinNoise;
-            StonesPerlinNoise = stonesPerlinNoise;
-            DiamondTopPerlinNoise = diamondTopPerlinNoise;
-            DiamondBottomPerlinNoise = diamondBottomPerlinNoise;
-        }
+        [Header("Layers")]
+        public List<WorldLayer> layers;
 
         private void Start()
         {
@@ -54,7 +41,7 @@ namespace DefaultNamespace
                         GameObject chunk = Instantiate(chunkPrefab, transform, true);
                         Vector3 position = new(chunkDimensions.x * x, chunkDimensions.y * y, chunkDimensions.z * z);
                         Chunk chunkComponent = chunk.GetComponent<Chunk>();
-                        chunkComponent.CreateChunk(chunkDimensions, position);
+                        chunkComponent.CreateChunk(chunkDimensions, position, layers);
                         loadingBar.value += 1;
                         yield return null;
                     }
@@ -66,7 +53,7 @@ namespace DefaultNamespace
 
             float xpos = (chunkDimensions.x * worldDimensions.x) / 2f;
             float zpos = (chunkDimensions.z * worldDimensions.z) / 2f;
-            float ypos = MeshUtils.fBM(xpos, zpos, surfacePerlinNoise) + 1;
+            float ypos = MeshUtils.fBM(xpos, zpos, layers[0].layers[0]) + 1;
 
             fpc.transform.position = new Vector3(xpos, ypos, zpos);
             fpc.SetActive(true);

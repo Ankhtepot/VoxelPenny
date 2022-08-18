@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd913017ec974175babc2fdc12c62bfa, type: 3}
+  m_Name: DiamondLayer
+  m_EditorClassIdentifier: 
+  probability: 0.3
+  layerType: 3
+  blockType: 20
+  layers:
+  - {fileID: 11400000, guid: 2c4e92842a6bfef4aa5735e6d4d2a397, type: 2}
+  - {fileID: 11400000, guid: 51a856f70a88db04ba7e97c9bb67e1dc, type: 2}

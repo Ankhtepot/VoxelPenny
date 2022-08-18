@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace Scripts
 {
@@ -9,6 +10,5 @@ namespace Scripts
         [Range(0f, 1f)]public float Scale;
         public float HeightOffset;
         public float HeightScale;
-        [Range(0f, 1f)]public float Probability;
     }
 }

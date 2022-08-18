@@ -715,10 +715,10 @@ MonoBehaviour:
   mCamera: {fileID: 737642193}
   fpc: {fileID: 1259757676}
   loadingBar: {fileID: 757390023}
-  surfacePerlinNoise: {fileID: 11400000, guid: cafa4d93afa666846b842ba986e7401d, type: 2}
-  stonesPerlinNoise: {fileID: 11400000, guid: 61093ee74085b074aa3290cc30a251b7, type: 2}
-  diamondTopPerlinNoise: {fileID: 11400000, guid: 2c4e92842a6bfef4aa5735e6d4d2a397, type: 2}
-  diamondBottomPerlinNoise: {fileID: 11400000, guid: 51a856f70a88db04ba7e97c9bb67e1dc, type: 2}
+  layers:
+  - {fileID: 11400000, guid: e1f02c86677413542872ebca442a9019, type: 2}
+  - {fileID: 11400000, guid: 716e5a07c92cc474f84d72de391b27fc, type: 2}
+  - {fileID: 11400000, guid: c6cdffd8bf5c46740b8d0831187ad8a8, type: 2}
 --- !u!4 &533708457
 Transform:
   m_ObjectHideFlags: 0

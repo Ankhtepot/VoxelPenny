@@ -30,7 +30,7 @@ public class Chunk : MonoBehaviour
 
     private int _blockCount;
 
-    public void CreateChunk(Vector3 dimensions, Vector3 position)
+    public void CreateChunk(Vector3 dimensions, Vector3 position, List<WorldLayer> layers)
     {
         location = position;
         width = (int) dimensions.x;
@@ -42,7 +42,7 @@ public class Chunk : MonoBehaviour
         mr.material = atlas;
         _blockCount = width * height * depth;
         blocks = new Block[width, height, depth];
-        BuildChunk();
+        BuildChunk(layers);
 
         List<Mesh> inputMeshes = new();
         int vertexStart = 0;
@@ -130,43 +130,36 @@ public class Chunk : MonoBehaviour
         myCollider.sharedMesh = mf.mesh;
     }
 
-    private void BuildChunk()
+    private void BuildChunk(List<WorldLayer> layers)
     {
         chunkData = new EBlockType[_blockCount];
         for (int i = 0; i < _blockCount; i++)
         {
             UnFlatten(i, out float x, out float y, out float z);
-
-            float heightForSurface = MeshUtils.fBM(x, z, World.SurfacePerlinNoise);
-            float heightForStones = MeshUtils.fBM(x, z, World.StonesPerlinNoise);
-            float heightForDiamondTop = MeshUtils.fBM(x, z, World.DiamondTopPerlinNoise);
-            float heightForDiamondBottom = MeshUtils.fBM(x, z, World.DiamondBottomPerlinNoise);
-
-            if ((int) y == (int) heightForSurface)
-            {
-                chunkData[i] = EBlockType.ConfiguredGrassCube;
-                continue;
-            }
-
-            if (y >= heightForDiamondBottom && y <= heightForDiamondTop && Random.Range(0f, 1f) <= World.DiamondTopPerlinNoise.Probability)
-            {
-                chunkData[i] = EBlockType.Diamond;
-                continue;
-            }
-
-            if (y < heightForStones && Random.Range(0f, 1f) <= World.StonesPerlinNoise.Probability)
-            {
-                chunkData[i] = EBlockType.WallSmallStones;
-                continue;
-            }
-
+            
+            float heightForSurface = MeshUtils.fBM(x, z, layers[0].layers[0]);
+            
             if (y > heightForSurface)
             {
                 chunkData[i] = EBlockType.Air;
                 continue;
             }
 
-            chunkData[i] = EBlockType.Dirt;
+            foreach (WorldLayer layer in layers)
+            {
+                float layerTopHeight = MeshUtils.fBM(x, z, layer.layers[0]);
+                float layerBottomHeight = layer.layers.Count == 2 ? MeshUtils.fBM(x, z, layer.layers[1]) : 0;
+
+                if ((layer.layerType == ELayerType.Equal && (int) y == (int) layerTopHeight)
+                    || (layer.layerType == ELayerType.LessThen && y < layerTopHeight && Random.Range(0f, 1f) < layer.probability)
+                    || (layer.layerType == ELayerType.BetweenTwo && y >= layerBottomHeight && y <= layerTopHeight && Random.Range(0f, 1f) <= layer.probability))
+                {
+                    chunkData[i] = layer.blockType;
+                    break;
+                }
+                
+                chunkData[i] = EBlockType.Dirt;
+            }
         }
     }
 
