@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd913017ec974175babc2fdc12c62bfa, type: 3}
   m_Name: StoneLayer
   m_EditorClassIdentifier: 
-  probability: 0
+  probability: 0.5
   layerType: 2
   blockType: 11
   layers:
