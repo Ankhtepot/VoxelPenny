@@ -133,6 +133,7 @@ public class Chunk : MonoBehaviour
     private void BuildChunk(List<WorldLayer> layers)
     {
         chunkData = new EBlockType[_blockCount];
+        
         for (int i = 0; i < _blockCount; i++)
         {
             UnFlatten(i, out float x, out float y, out float z);

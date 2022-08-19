@@ -17,7 +17,7 @@ namespace DefaultNamespace
         public Slider loadingBar;
 
         [Header("Layers")]
-        public List<WorldLayer> layers;
+        public List<WorldLayer> worldLayers;
 
         private void Start()
         {
@@ -41,7 +41,7 @@ namespace DefaultNamespace
                         GameObject chunk = Instantiate(chunkPrefab, transform, true);
                         Vector3 position = new(chunkDimensions.x * x, chunkDimensions.y * y, chunkDimensions.z * z);
                         Chunk chunkComponent = chunk.GetComponent<Chunk>();
-                        chunkComponent.CreateChunk(chunkDimensions, position, layers);
+                        chunkComponent.CreateChunk(chunkDimensions, position, worldLayers);
                         loadingBar.value += 1;
                         yield return null;
                     }
@@ -53,7 +53,7 @@ namespace DefaultNamespace
 
             float xpos = (chunkDimensions.x * worldDimensions.x) / 2f;
             float zpos = (chunkDimensions.z * worldDimensions.z) / 2f;
-            float ypos = MeshUtils.fBM(xpos, zpos, layers[0].layers[0]) + 1;
+            float ypos = MeshUtils.fBM(xpos, zpos, worldLayers[0].layers[0]) + 1;
 
             fpc.transform.position = new Vector3(xpos, ypos, zpos);
             fpc.SetActive(true);
