@@ -13,10 +13,10 @@ public class Block
     
     private readonly List<EBlockType> _ignoredNeighbourTypes = new() {EBlockType.Air, EBlockType.Water};
 
-    public Block(EBlockType type, Vector3 offset, Chunk chunk, TileConfiguration tileConfiguration = null)
+    public Block(EBlockType type, Vector3Int offset, Chunk chunk, TileConfiguration tileConfiguration = null)
     {
         _parentChunk = chunk;
-        Vector3Int blockLocalPos = (offset - chunk.location).ToVector3Int();
+        Vector3Int blockLocalPos = (offset - chunk.location);
 
         if (type == EBlockType.Air) return;
         

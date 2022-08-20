@@ -12,7 +12,7 @@ using Random = UnityEngine.Random;
 
 public class Chunk : MonoBehaviour
 {
-    public Vector3 location;
+    public Vector3Int location;
     public Material atlas;
     public TileConfiguration grassConfiguration;
     [HideInInspector] public int width;
@@ -27,19 +27,20 @@ public class Chunk : MonoBehaviour
     // z = i / (Width * Height)
 
     public EBlockType[] chunkData;
+    [HideInInspector] public MeshRenderer MeshRenderer;
 
     private int _blockCount;
 
-    public void CreateChunk(Vector3 dimensions, Vector3 position, WorldLayers layers)
+    public void CreateChunk(Vector3Int dimensions, Vector3Int position, WorldLayers layers)
     {
         location = position;
-        width = (int) dimensions.x;
-        height = (int) dimensions.y;
-        depth = (int) dimensions.z;
+        width = dimensions.x;
+        height = dimensions.y;
+        depth = dimensions.z;
 
         MeshFilter mf = gameObject.AddComponent<MeshFilter>();
-        MeshRenderer mr = gameObject.AddComponent<MeshRenderer>();
-        mr.material = atlas;
+        MeshRenderer = gameObject.AddComponent<MeshRenderer>();
+        MeshRenderer.material = atlas;
         _blockCount = width * height * depth;
         blocks = new Block[width, height, depth];
         BuildChunk(layers);
@@ -70,7 +71,7 @@ public class Chunk : MonoBehaviour
 
                     blocks[x, y, z] = new Block(
                         blockType,
-                        new Vector3(x, y, z) + location,
+                        new Vector3Int(x, y, z) + location,
                         this,
                         configuration
                     );
@@ -139,20 +140,32 @@ public class Chunk : MonoBehaviour
             UnFlatten(i, out float x, out float y, out float z);
 
             bool drawDirt = true;
+            float bedrockHeight = Mathf.Floor(MeshUtils.fBM(x, z, worldLayers.BedrockSettings));
 
+            if (IsEqualLayer(y, worldLayers.BedrockLayer, bedrockHeight))
+            {
+                chunkData[i] = worldLayers.BedrockLayer.blockType;
+                continue;
+            }
+            
+            if (IsCaveBlock(x, y, z, worldLayers.CaveLayer))
+            {
+                chunkData[i] = worldLayers.CaveLayer.blockType;
+                continue;
+            }
+
+            
             foreach (WorldLayer layer in worldLayers.Layers)
             {
-                if (y > MeshUtils.fBM(x, z, worldLayers.SurfaceSettings)
-                    || y < Mathf.Floor(MeshUtils.fBM(x, z, worldLayers.BedrockSettings)))
+                if (y > MeshUtils.fBM(x, z, worldLayers.SurfaceSettings) || y < bedrockHeight)
                 {
                     chunkData[i] = EBlockType.Air;
-                    continue;
+                    break;
                 }
-
+                
                 float layerTopHeight = MeshUtils.fBM(x, z, layer.layers[0]);
 
-                if (IsCaveLayer(x, y, z, layer)
-                    || IsEqualLayer(y, layer, layerTopHeight)
+                if (IsEqualLayer(y, layer, layerTopHeight)
                     || IsLessThanLayer(y, layer, layerTopHeight)
                     || IsBetweenLayer(x, y, z, layer, layerTopHeight)
                 )
@@ -171,26 +184,31 @@ public class Chunk : MonoBehaviour
     }
 
     private bool IsEqualLayer(float y, WorldLayer layer, float topHeight) =>
-        (layer.layerType == ELayerType.Equal && (int) y == (int) topHeight);
+        (layer.layerType == ELayerType.Equal 
+         && (int) y == (int) topHeight);
 
     private bool IsLessThanLayer(float y, WorldLayer layer, float topHeight) =>
-        (layer.layerType == ELayerType.LessThen && y < topHeight &&
-         Random.Range(0f, 1f) < layer.probability);
+        (layer.layerType == ELayerType.LessThen 
+         && y < topHeight 
+         && Random.Range(0f, 1f) < layer.probability);
 
     private bool IsBetweenLayer(float x, float y, float z, WorldLayer layer, float topHeight)
     {
         float layerBottomHeight = layer.layers.Count == 2 ? MeshUtils.fBM(x, z, layer.layers[1]) : 0;
-        return (layer.layerType == ELayerType.BetweenTwo && y >= layerBottomHeight && y <= topHeight &&
-                Random.Range(0f, 1f) <= layer.probability);
+        return (layer.layerType == ELayerType.BetweenTwo 
+                && y >= layerBottomHeight 
+                && y <= topHeight 
+                && Random.Range(0f, 1f) <= layer.probability);
     }
 
-    private bool IsCaveLayer(float x, float y, float z, WorldLayer layer)
+    private bool IsCaveBlock(float x, float y, float z, WorldLayer layer)
     {
         if (layer.layerType != ELayerType.Cave) return false;
 
         CavePNSettings settings = (CavePNSettings) layer.layers[0];
 
-        return MeshUtils.fBM3D(x, y, z, settings) < settings.DrawCutoff && Random.Range(0f, 1f) < layer.probability;
+        return MeshUtils.fBM3D(x, y, z, settings) < settings.DrawCutoff 
+               && Random.Range(0f, 1f) < layer.probability;
     }
 
     private int FlattenXYZ(int x, int y, int z)

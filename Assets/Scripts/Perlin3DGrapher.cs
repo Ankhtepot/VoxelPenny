@@ -81,7 +81,6 @@ public class Perlin3DGrapher : MonoBehaviour
         settings.Scale = scale;
         settings.HeightOffset = heightOffset;
         settings.HeightScale = heightScale;
-        dimensions = dimensions;
         settings.DrawCutoff = drawCutoff;
         Graph();
     }

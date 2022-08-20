@@ -19,11 +19,11 @@ public static class MeshUtils
 
     public static Mesh MergeMeshes(IEnumerable<Mesh> inputMeshes)
     {
-        Mesh mesh = new Mesh();
+        Mesh mesh = new();
 
-        Dictionary<VertexData, int> pointsOrder = new Dictionary<VertexData, int>();
-        HashSet<VertexData> pointsHash = new HashSet<VertexData>();
-        List<int> tris = new List<int>();
+        Dictionary<VertexData, int> pointsOrder = new();
+        HashSet<VertexData> pointsHash = new();
+        List<int> tris = new();
 
         int pIndex = 0;
 
@@ -38,7 +38,7 @@ public static class MeshUtils
                 Vector3 v = meshes.ElementAt(i).vertices[j];
                 Vector3 n = meshes.ElementAt(i).normals[j];
                 Vector2 u = meshes.ElementAt(i).uv[j];
-                VertexData p = new VertexData(v, n, u);
+                VertexData p = new(v, n, u);
 
                 if (!pointsHash.Contains(p))
                 {
@@ -54,7 +54,7 @@ public static class MeshUtils
                 Vector3 v = meshes.ElementAt(i).vertices[triPoint];
                 Vector3 n = meshes.ElementAt(i).normals[triPoint];
                 Vector2 u = meshes.ElementAt(i).uv[triPoint];
-                VertexData p = new VertexData(v, n, u);
+                VertexData p = new(v, n, u);
 
                 pointsOrder.TryGetValue(p, out int index);
                 tris.Add(index);
@@ -71,9 +71,9 @@ public static class MeshUtils
 
     public static void ExtractArrays(Dictionary<VertexData, int> list, Mesh mesh)
     {
-        List<Vector3> verts = new List<Vector3>();
-        List<Vector3> norms = new List<Vector3>();
-        List<Vector2> uvs = new List<Vector2>();
+        List<Vector3> verts = new();
+        List<Vector3> norms = new();
+        List<Vector2> uvs = new();
 
         foreach (VertexData v in list.Keys)
         {
