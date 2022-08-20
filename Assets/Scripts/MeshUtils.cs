@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using DefaultNamespace;
 using Scripts;
 using UnityEngine;
 using VertexData = System.Tuple<UnityEngine.Vector3, UnityEngine.Vector3, UnityEngine.Vector2>;
@@ -104,6 +105,11 @@ public static class MeshUtils
         }
 
         return total + heightOffset;
+    }
+
+    public static float fBM3D(float x, float y, float z, CavePNSettings settings) // finite Brownian Motion 3D
+    {
+        return fBM3D(x, y, z, settings.Octaves, settings.Scale, settings.HeightScale, settings.HeightOffset);
     }
 
     public static float

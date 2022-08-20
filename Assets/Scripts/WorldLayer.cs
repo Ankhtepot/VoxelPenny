@@ -10,6 +10,7 @@ namespace Scripts
         Equal = 1,
         LessThen = 2,
         BetweenTwo = 3,
+        Cave = 4,
     }
 
     [CreateAssetMenu(menuName = "Scriptable Objects/World Layer", fileName = "WorldLayer")]
@@ -30,7 +31,7 @@ namespace Scripts
             {
                 newLayerList = new() {layers[0], null};
             }
-            else if (layers.Count == 2 && (layerType == ELayerType.LessThen || layerType == ELayerType.Equal))
+            else if (layers.Count == 2 && layerType != ELayerType.BetweenTwo)
             {
                 newLayerList = new List<PerlinNoiseSettings> {layers[0]};
             }

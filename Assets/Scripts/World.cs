@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using Scripts;
+﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,15 +6,16 @@ namespace DefaultNamespace
 {
     public class World : MonoBehaviour
     {
-        public static Vector3 worldDimensions = new(5, 3, 5);
-        public static Vector3 chunkDimensions = new(10, 10, 10);
         public GameObject chunkPrefab;
         public GameObject mCamera;
         public GameObject fpc;
         public Slider loadingBar;
 
         [Header("Layers")]
-        public List<WorldLayer> worldLayers;
+        public WorldLayers worldLayers;
+        
+        private static Vector3 worldDimensions = new(5, 3, 5);
+        private static Vector3 chunkDimensions = new(10, 10, 10);
 
         private void Start()
         {
@@ -51,11 +49,11 @@ namespace DefaultNamespace
             mCamera.SetActive(false);
             loadingBar.gameObject.SetActive(false);
 
-            float xpos = (chunkDimensions.x * worldDimensions.x) / 2f;
-            float zpos = (chunkDimensions.z * worldDimensions.z) / 2f;
-            float ypos = MeshUtils.fBM(xpos, zpos, worldLayers[0].layers[0]) + 1;
+            float xPos = (chunkDimensions.x * worldDimensions.x) / 2f;
+            float zPos = (chunkDimensions.z * worldDimensions.z) / 2f;
+            float yPos = MeshUtils.fBM(xPos, zPos, worldLayers.SurfaceSettings) + 1;
 
-            fpc.transform.position = new Vector3(xpos, ypos, zpos);
+            fpc.transform.position = new Vector3(xPos, yPos, zPos);
             fpc.SetActive(true);
         }
     }
