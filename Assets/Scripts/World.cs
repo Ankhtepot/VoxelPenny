@@ -19,10 +19,13 @@ namespace Scripts
         private static Vector3Int _chunkDimensions = new(10, 10, 10);
 
         private HashSet<Vector3Int> chunkChecker = new();
-        private HashSet<Vector2Int> chunColumns = new();
+        private HashSet<Vector2Int> chunkColumns = new();
         private Dictionary<Vector3Int, Chunk> chunks = new();
 
         private Vector3Int _lastBuildPosition;
+        private const int DrawRadius = 4;
+
+        private readonly Queue<IEnumerator> _buildQueue = new();
 
         private void Start()
         {
@@ -34,6 +37,19 @@ namespace Scripts
             loadingBar.maxValue = _worldDimensions.x * _worldDimensions.z;
             loadingBar.value = 0;
             StartCoroutine(BuildWorld());
+        }
+
+        private IEnumerator BuildCoordinator()
+        {
+            while (true)
+            {
+                while (_buildQueue.Count > 0)
+                {
+                    yield return StartCoroutine(_buildQueue.Dequeue());
+                }
+
+                yield return null;
+            }
         }
 
         private void BuildChunkColumn(int x, int z)
@@ -55,6 +71,8 @@ namespace Scripts
                 chunkChecker.Add(position);
                 chunks.Add(position, chunkComponent);
             }
+
+            chunkColumns.Add(new Vector2Int(x, z));
         }
 
         private IEnumerator BuildWorld()
@@ -83,6 +101,75 @@ namespace Scripts
             fpc.transform.position = new Vector3(xPos, yPos, zPos);
             fpc.SetActive(true);
             _lastBuildPosition = Vector3Int.CeilToInt(fpc.transform.position);
+            StartCoroutine(BuildCoordinator());
+            StartCoroutine(UpdateWorld());
+        }
+
+        private readonly WaitForSeconds _wfs = new(0.5f);
+        private IEnumerator UpdateWorld()
+        {
+            while (true)
+            {
+                if ((_lastBuildPosition - fpc.transform.position).magnitude > _chunkDimensions.x)
+                {
+                    Vector3 fpcPosition = fpc.transform.position;
+                    _lastBuildPosition = Vector3Int.CeilToInt(fpcPosition);
+                    int posX = (int) (fpcPosition.x / _chunkDimensions.x) * _chunkDimensions.x;
+                    int posZ = (int) (fpcPosition.z / _chunkDimensions.z) * _chunkDimensions.z;
+                    _buildQueue.Enqueue(BuildRecursiveWorld(posX, posZ, DrawRadius));
+                    _buildQueue.Enqueue(HideColumns(posX, posZ));
+                }
+
+                yield return _wfs;
+            }
+        }
+
+        public void HideChunkColumn(int x, int z)
+        {
+            for (int y = 0; y < _worldDimensions.y; y++)
+            {
+                Vector3Int pos = new(x, y * _chunkDimensions.y, z);
+                if (chunkChecker.Contains(pos))
+                {
+                    chunks[pos].MeshRenderer.enabled = false;
+                }
+            }
+        }
+
+        private IEnumerator HideColumns(int x, int z)
+        {
+            Vector2Int fpcPos = new(x, z);
+            foreach (Vector2Int chunkColumn in chunkColumns)
+            {
+                if ((chunkColumn - fpcPos).magnitude >= DrawRadius * _chunkDimensions.x)
+                {
+                    HideChunkColumn(chunkColumn.x, chunkColumn.y);
+                }
+            }
+
+            yield return null;
+        }
+
+        private IEnumerator BuildRecursiveWorld(int x, int z, int rad)
+        {
+            int nextRad = rad - 1;
+            if (rad <= 0) yield break;
+            
+            BuildChunkColumn(x, z + _chunkDimensions.z);
+            _buildQueue.Enqueue(BuildRecursiveWorld(x, z + _chunkDimensions.z, nextRad));
+            yield return null;
+            
+            BuildChunkColumn(x, z - _chunkDimensions.z);
+            _buildQueue.Enqueue(BuildRecursiveWorld(x, z - _chunkDimensions.z, nextRad));
+            yield return null;
+            
+            BuildChunkColumn(x + _chunkDimensions.x, z );
+            _buildQueue.Enqueue(BuildRecursiveWorld(x + _chunkDimensions.x, z, nextRad));
+            yield return null;
+            
+            BuildChunkColumn(x - _chunkDimensions.x, z );
+            _buildQueue.Enqueue(BuildRecursiveWorld(x - _chunkDimensions.x, z, nextRad));
+            yield return null;
         }
     }
 }
