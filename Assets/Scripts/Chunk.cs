@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DefaultNamespace;
 using Scripts;
@@ -8,7 +9,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 using static S2_Quad.BlockAtlas;
-using Random = UnityEngine.Random;
+using Random = Unity.Mathematics.Random;
 
 public class Chunk : MonoBehaviour
 {
@@ -29,9 +30,13 @@ public class Chunk : MonoBehaviour
     public EBlockType[] chunkData;
     [HideInInspector] public MeshRenderer MeshRenderer;
 
+    private CalculateBlockTypes _calculateBlockTypes;
+    private JobHandle _jobHandle;
+    public NativeArray<Random> RandomArray { get; private set; }
+
     private int _blockCount;
 
-    public void CreateChunk(Vector3Int dimensions, Vector3Int position, WorldLayers layers)
+    public void CreateChunk(Vector3Int dimensions, Vector3Int position)
     {
         location = position;
         width = dimensions.x;
@@ -43,7 +48,7 @@ public class Chunk : MonoBehaviour
         MeshRenderer.material = atlas;
         _blockCount = width * height * depth;
         blocks = new Block[width, height, depth];
-        BuildChunk(layers);
+        BuildChunk();
 
         List<Mesh> inputMeshes = new();
         int vertexStart = 0;
@@ -131,96 +136,39 @@ public class Chunk : MonoBehaviour
         myCollider.sharedMesh = mf.mesh;
     }
 
-    private void BuildChunk(WorldLayers worldLayers)
+    private void BuildChunk()
     {
         chunkData = new EBlockType[_blockCount];
 
-        for (int i = 0; i < _blockCount; i++)
+        NativeArray<EBlockType> blockTypes = new(chunkData, Allocator.Persistent);
+
+        Random[] randomArray = new Random[_blockCount];
+        System.Random seed = new();
+
+        for (int i = 0; i < _blockCount; ++i)
+            randomArray[i] = new Random((uint)seed.Next());
+
+        RandomArray = new NativeArray<Random>(randomArray, Allocator.Persistent);
+
+        _calculateBlockTypes = new CalculateBlockTypes
         {
-            UnFlatten(i, out float x, out float y, out float z);
+            chunkData = blockTypes,
+            width = width,
+            height = height,
+            location = location,
+            randoms = RandomArray,
+        };
 
-            bool drawDirt = true;
-            float bedrockHeight = Mathf.Floor(MeshUtils.fBM(x, z, worldLayers.BedrockSettings));
-
-            if (IsEqualLayer(y, worldLayers.BedrockLayer, bedrockHeight))
-            {
-                chunkData[i] = worldLayers.BedrockLayer.blockType;
-                continue;
-            }
-            
-            if (IsCaveBlock(x, y, z, worldLayers.CaveLayer))
-            {
-                chunkData[i] = worldLayers.CaveLayer.blockType;
-                continue;
-            }
-
-            
-            foreach (WorldLayer layer in worldLayers.Layers)
-            {
-                if (y > MeshUtils.fBM(x, z, worldLayers.SurfaceSettings) || y < bedrockHeight)
-                {
-                    chunkData[i] = EBlockType.Air;
-                    break;
-                }
-                
-                float layerTopHeight = MeshUtils.fBM(x, z, layer.layers[0]);
-
-                if (IsEqualLayer(y, layer, layerTopHeight)
-                    || IsLessThanLayer(y, layer, layerTopHeight)
-                    || IsBetweenLayer(x, y, z, layer, layerTopHeight)
-                )
-                {
-                    chunkData[i] = layer.blockType;
-                    drawDirt = false;
-                    continue;
-                }
-
-                if (drawDirt)
-                {
-                    chunkData[i] = EBlockType.Dirt;
-                }
-            }
-        }
+        _jobHandle = _calculateBlockTypes.Schedule(chunkData.Length, 64);
+        _jobHandle.Complete();
+        _calculateBlockTypes.chunkData.CopyTo(chunkData);
+        blockTypes.Dispose();
+        RandomArray.Dispose();
     }
-
-    private bool IsEqualLayer(float y, WorldLayer layer, float topHeight) =>
-        (layer.layerType == ELayerType.Equal 
-         && (int) y == (int) topHeight);
-
-    private bool IsLessThanLayer(float y, WorldLayer layer, float topHeight) =>
-        (layer.layerType == ELayerType.LessThen 
-         && y < topHeight 
-         && Random.Range(0f, 1f) < layer.probability);
-
-    private bool IsBetweenLayer(float x, float y, float z, WorldLayer layer, float topHeight)
-    {
-        float layerBottomHeight = layer.layers.Count == 2 ? MeshUtils.fBM(x, z, layer.layers[1]) : 0;
-        return (layer.layerType == ELayerType.BetweenTwo 
-                && y >= layerBottomHeight 
-                && y <= topHeight 
-                && Random.Range(0f, 1f) <= layer.probability);
-    }
-
-    private bool IsCaveBlock(float x, float y, float z, WorldLayer layer)
-    {
-        if (layer.layerType != ELayerType.Cave) return false;
-
-        CavePNSettings settings = (CavePNSettings) layer.layers[0];
-
-        return MeshUtils.fBM3D(x, y, z, settings) < settings.DrawCutoff 
-               && Random.Range(0f, 1f) < layer.probability;
-    }
-
+    
     private int FlattenXYZ(int x, int y, int z)
     {
         return x + width * (y + depth * z);
-    }
-
-    private void UnFlatten(int index, out float x, out float y, out float z)
-    {
-        x = index % width + location.x;
-        y = (index / width) % height + location.y;
-        z = index / (width * height) + location.z;
     }
 
     [BurstCompile]
@@ -281,6 +229,80 @@ public class Chunk : MonoBehaviour
                     outputTris[i + tStart] = vStart + tris[i];
                 }
             }
+        }
+    }
+
+    struct CalculateBlockTypes : IJobParallelFor
+    {
+        public NativeArray<EBlockType> chunkData;
+        public int width;
+        public int height;
+        public Vector3 location;
+        public NativeArray<Random> randoms;
+
+        public void Execute(int i)
+        {
+            UnFlatten(i, out float x, out float y, out float z);
+
+            Random random = randoms[i];
+
+            PerlinNoiseSettings surfaceSettings = World.WorldLayers.SurfaceSettings;
+            PerlinNoiseSettings stoneSettings = World.WorldLayers.StoneSettings;
+            PerlinNoiseSettings diamondTSettings = World.WorldLayers.DiamondTopSettings;
+            PerlinNoiseSettings diamondBSettings = World.WorldLayers.DiamondBottomSettings;
+            CavePNSettings caveSettings = World.WorldLayers.CaveSettings;
+
+            int surfaceHeight = (int)MeshUtils.fBM(x, z, surfaceSettings.Octaves,
+                                                   surfaceSettings.Scale, surfaceSettings.HeightScale,
+                                                   surfaceSettings.HeightOffset);
+
+            int stoneHeight = (int)MeshUtils.fBM(x, z, stoneSettings.Octaves,
+                                                   stoneSettings.Scale, stoneSettings.HeightScale,
+                                                   stoneSettings.HeightOffset);
+
+            int diamondTHeight = (int)MeshUtils.fBM(x, z, diamondTSettings.Octaves,
+                                       diamondTSettings.Scale, diamondTSettings.HeightScale,
+                                       diamondTSettings.HeightOffset);
+
+            int diamondBHeight = (int)MeshUtils.fBM(x, z, diamondBSettings.Octaves,
+                           diamondBSettings.Scale, diamondBSettings.HeightScale,
+                           diamondBSettings.HeightOffset);
+
+            int digCave = (int)MeshUtils.fBM3D(x, y, z, caveSettings.Octaves,
+                           caveSettings.Scale, caveSettings.HeightScale,
+                           caveSettings.HeightOffset);
+
+            if (y == 0)
+            {
+                chunkData[i] = EBlockType.Bedrock;
+                return;
+            }
+
+            if (digCave < World.WorldLayers.BedrockLayer.probability)
+            {
+                chunkData[i] = EBlockType.Air;
+                return;
+            }
+
+            if (Math.Abs(surfaceHeight - y) < Single.Epsilon)
+            {
+                chunkData[i] = EBlockType.ConfiguredGrassCube;
+            }
+            else if (y < diamondTHeight && y > diamondBHeight && random.NextFloat(1) <= World.WorldLayers.DiamondLayer.probability)
+                chunkData[i] = EBlockType.Diamond;
+            else if (y < stoneHeight && random.NextFloat(1) <= World.WorldLayers.StoneLayer.probability)
+                chunkData[i] = EBlockType.WallSmallStones;
+            else if (y < surfaceHeight)
+                chunkData[i] = EBlockType.Dirt;
+            else
+                chunkData[i] = EBlockType.Air;
+        }
+
+        private void UnFlatten(int index, out float x, out float y, out float z)
+        {
+            x = index % width + location.x;
+            y = (index / width) % height + location.y;
+            z = index / (width * height) + location.z;
         }
     }
 }

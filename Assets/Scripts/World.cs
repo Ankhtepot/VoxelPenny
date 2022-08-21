@@ -14,8 +14,10 @@ namespace Scripts
         public bool disableGraphersOnStart;
 
         public WorldLayers worldLayers;
+        public static WorldLayers WorldLayers;
 
-        private static Vector3Int _worldDimensions = new(5, 3, 5);
+        private static Vector3Int _worldDimensions = new(20, 5, 20);
+        private static Vector3Int _extraWorldDimensions = new(10, 5, 10);
         private static Vector3Int _chunkDimensions = new(10, 10, 10);
 
         private HashSet<Vector3Int> chunkChecker = new();
@@ -26,6 +28,11 @@ namespace Scripts
         private const int DrawRadius = 4;
 
         private readonly Queue<IEnumerator> _buildQueue = new();
+
+        private void Awake()
+        {
+            WorldLayers = worldLayers;
+        }
 
         private void Start()
         {
@@ -52,27 +59,53 @@ namespace Scripts
             }
         }
 
-        private void BuildChunkColumn(int x, int z)
+        private void BuildChunkColumn(int x, int z, bool meshEnabled = true)
         {
             for (int y = 0; y < _worldDimensions.y; y++)
             {
                 Vector3Int position = new(x, _chunkDimensions.y * y, z);
 
-                if (chunkChecker.Contains(position))
+                if (!chunkChecker.Contains(position))
                 {
-                    chunks[position].MeshRenderer.enabled = true;
-                    return;
+                    GameObject chunk = Instantiate(chunkPrefab, transform, true);
+                    Chunk chunkComponent = chunk.GetComponent<Chunk>();
+                    chunk.name = $"Chunk_{position.x}_{position.y}_{position.z}";
+                    chunkComponent.CreateChunk(_chunkDimensions, position);
+                    chunkChecker.Add(position);
+                    chunks.Add(position, chunkComponent);
                 }
                 
-                GameObject chunk = Instantiate(chunkPrefab, transform, true);
-                Chunk chunkComponent = chunk.GetComponent<Chunk>();
-                chunk.name = $"Chunk_{position.x}_{position.y}_{position.z}";
-                chunkComponent.CreateChunk(_chunkDimensions, position, worldLayers);
-                chunkChecker.Add(position);
-                chunks.Add(position, chunkComponent);
+                chunks[position].MeshRenderer.enabled = meshEnabled;
             }
 
             chunkColumns.Add(new Vector2Int(x, z));
+        }
+
+        private IEnumerator BuildExtraWorld()
+        {
+            int zEnd = _worldDimensions.z + _extraWorldDimensions.z;
+            int zStart = _worldDimensions.z;
+            
+            int xEnd = _worldDimensions.x + _extraWorldDimensions.x;
+            int xStart = _worldDimensions.x;
+
+            for (int z = zStart; z < zEnd; z++)
+            {
+                for (int x = 0; x < xEnd; x++)
+                {
+                    BuildChunkColumn(x * _chunkDimensions.x, z * _chunkDimensions.z, false);
+                    yield return null;
+                }
+            }
+            
+            for (int z = 0; z < zEnd; z++)
+            {
+                for (int x = xStart; x < xEnd; x++)
+                {
+                    BuildChunkColumn(x * _chunkDimensions.x, z * _chunkDimensions.z, false);
+                    yield return null;
+                }
+            }
         }
 
         private IEnumerator BuildWorld()
@@ -103,6 +136,7 @@ namespace Scripts
             _lastBuildPosition = Vector3Int.CeilToInt(fpc.transform.position);
             StartCoroutine(BuildCoordinator());
             StartCoroutine(UpdateWorld());
+            StartCoroutine(BuildExtraWorld());
         }
 
         private readonly WaitForSeconds _wfs = new(0.5f);
@@ -124,7 +158,7 @@ namespace Scripts
             }
         }
 
-        public void HideChunkColumn(int x, int z)
+        private void HideChunkColumn(int x, int z)
         {
             for (int y = 0; y < _worldDimensions.y; y++)
             {
