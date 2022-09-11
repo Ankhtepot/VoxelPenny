@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TestCave
   m_EditorClassIdentifier: 
   Octaves: 3
-  Scale: 0.025
-  HeightOffset: 1.1
+  Scale: 0.03
+  HeightOffset: 1.24
   HeightScale: 2
-  DrawCutoff: 3.7
+  DrawCutoff: 4

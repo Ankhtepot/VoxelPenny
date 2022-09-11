@@ -16,8 +16,8 @@ namespace Scripts
         public WorldLayers worldLayers;
         public static WorldLayers WorldLayers;
 
-        private static Vector3Int _worldDimensions = new(20, 5, 20);
-        private static Vector3Int _extraWorldDimensions = new(10, 5, 10);
+        private static Vector3Int _worldDimensions = new(5, 5, 5);
+        private static Vector3Int _extraWorldDimensions = new(5, 5, 5);
         private static Vector3Int _chunkDimensions = new(10, 10, 10);
 
         private HashSet<Vector3Int> chunkChecker = new();
@@ -44,6 +44,23 @@ namespace Scripts
             loadingBar.maxValue = _worldDimensions.x * _worldDimensions.z;
             loadingBar.value = 0;
             StartCoroutine(BuildWorld());
+        }
+
+        private void Update()
+        {
+            if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
+            {
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                if (Physics.Raycast(ray, out RaycastHit hit, 10))
+                {
+                    Vector3 hitBlock = Vector3.zero;
+                    if (Input.GetMouseButtonDown(0))
+                    {
+                        hitBlock = hit.point - hit.normal / 2f;
+                    }
+                    Debug.Log($"Block Location: {hitBlock.x}, {hitBlock.y}, {hitBlock.z}");
+                }
+            }
         }
 
         private IEnumerator BuildCoordinator()
@@ -135,7 +152,7 @@ namespace Scripts
             fpc.SetActive(true);
             _lastBuildPosition = Vector3Int.CeilToInt(fpc.transform.position);
             StartCoroutine(BuildCoordinator());
-            StartCoroutine(UpdateWorld());
+            // StartCoroutine(UpdateWorld());
             StartCoroutine(BuildExtraWorld());
         }
 

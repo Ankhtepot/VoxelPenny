@@ -20,7 +20,7 @@ public class Chunk : MonoBehaviour
     [HideInInspector] public int height;
     [HideInInspector] public int depth;
 
-    public Block[,,] blocks;
+    private Block[,,] blocks;
 
     // Flat[x + Width * (y + Depth * z)] = Original[x, y, z]
     // x = i % Width
@@ -32,7 +32,7 @@ public class Chunk : MonoBehaviour
 
     private CalculateBlockTypes _calculateBlockTypes;
     private JobHandle _jobHandle;
-    public NativeArray<Random> RandomArray { get; private set; }
+    private NativeArray<Random> RandomArray { get; set; }
 
     private int _blockCount;
 
@@ -113,6 +113,7 @@ public class Chunk : MonoBehaviour
             name = $"Chunk_{location.x}_{location.y}_{location.z}"
         };
 
+        // ReSharper disable once RedundantArgumentDefaultValue - MeshTopology.Triangles left for reference even its default value
         SubMeshDescriptor sm = new(0, triStart, MeshTopology.Triangles)
         {
             firstVertex = 0,
@@ -172,7 +173,7 @@ public class Chunk : MonoBehaviour
     }
 
     [BurstCompile]
-    struct ProcessMeshDataJob : IJobParallelFor
+    private struct ProcessMeshDataJob : IJobParallelFor
     {
         [ReadOnly] public Mesh.MeshDataArray meshData;
         public Mesh.MeshData outputMesh;
@@ -232,7 +233,7 @@ public class Chunk : MonoBehaviour
         }
     }
 
-    struct CalculateBlockTypes : IJobParallelFor
+    private struct CalculateBlockTypes : IJobParallelFor
     {
         public NativeArray<EBlockType> chunkData;
         public int width;
@@ -277,8 +278,8 @@ public class Chunk : MonoBehaviour
                 chunkData[i] = EBlockType.Bedrock;
                 return;
             }
-
-            if (digCave < World.WorldLayers.BedrockLayer.probability)
+            
+            if (digCave < World.WorldLayers.CaveSettings.DrawCutoff)
             {
                 chunkData[i] = EBlockType.Air;
                 return;
@@ -302,6 +303,7 @@ public class Chunk : MonoBehaviour
         {
             x = index % width + location.x;
             y = (index / width) % height + location.y;
+            // ReSharper disable once PossibleLossOfFraction - should be OK here
             z = index / (width * height) + location.z;
         }
     }
