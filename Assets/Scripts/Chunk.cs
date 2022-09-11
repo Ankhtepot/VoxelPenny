@@ -36,7 +36,7 @@ public class Chunk : MonoBehaviour
 
     private int _blockCount;
 
-    public void CreateChunk(Vector3Int dimensions, Vector3Int position)
+    public void CreateChunk(Vector3Int dimensions, Vector3Int position, bool rebuildBlocks = true)
     {
         location = position;
         width = dimensions.x;
@@ -48,7 +48,11 @@ public class Chunk : MonoBehaviour
         MeshRenderer.material = atlas;
         _blockCount = width * height * depth;
         blocks = new Block[width, height, depth];
-        BuildChunk();
+        
+        if (rebuildBlocks)
+        {
+            BuildChunk();
+        }
 
         List<Mesh> inputMeshes = new();
         int vertexStart = 0;

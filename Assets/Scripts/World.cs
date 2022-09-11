@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using S2_Quad;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -58,7 +59,18 @@ namespace Scripts
                     {
                         hitBlock = hit.point - hit.normal / 2f;
                     }
-                    Debug.Log($"Block Location: {hitBlock.x}, {hitBlock.y}, {hitBlock.z}");
+
+                    Chunk thisChunk = hit.collider.gameObject.GetComponent<Chunk>();
+
+                    int bx = (int) (Mathf.Round(hitBlock.x) - thisChunk.location.x);
+                    int by = (int) (Mathf.Round(hitBlock.y) - thisChunk.location.y);
+                    int bz = (int) (Mathf.Round(hitBlock.z) - thisChunk.location.z);
+                    int i = bx + _chunkDimensions.x * (by + _chunkDimensions.z * bz);
+                    thisChunk.chunkData[i] = BlockAtlas.EBlockType.Air;
+                    DestroyImmediate(thisChunk.GetComponent<MeshFilter>());
+                    DestroyImmediate(thisChunk.GetComponent<MeshRenderer>());
+                    DestroyImmediate(thisChunk.GetComponent<MeshCollider>());
+                    thisChunk.CreateChunk(_chunkDimensions, thisChunk.location, false);
                 }
             }
         }
