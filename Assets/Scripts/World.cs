@@ -1,8 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using S2_Quad;
 using UnityEngine;
 using UnityEngine.UI;
+using static S2_Quad.BlockAtlas;
 
 namespace Scripts
 {
@@ -66,13 +66,19 @@ namespace Scripts
                     int by = (int) (Mathf.Round(hitBlock.y) - thisChunk.location.y);
                     int bz = (int) (Mathf.Round(hitBlock.z) - thisChunk.location.z);
                     int i = bx + _chunkDimensions.x * (by + _chunkDimensions.z * bz);
-                    thisChunk.chunkData[i] = BlockAtlas.EBlockType.Air;
+                    thisChunk.chunkData[i] = EBlockType.Air;
                     DestroyImmediate(thisChunk.GetComponent<MeshFilter>());
                     DestroyImmediate(thisChunk.GetComponent<MeshRenderer>());
                     DestroyImmediate(thisChunk.GetComponent<MeshCollider>());
                     thisChunk.CreateChunk(_chunkDimensions, thisChunk.location, false);
                 }
             }
+        }
+
+        private EBlockType buildType;
+        public void SetBuildType(int type)
+        {
+            buildType = (EBlockType) type;
         }
 
         private IEnumerator BuildCoordinator()
