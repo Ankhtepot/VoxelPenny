@@ -55,18 +55,67 @@ namespace Scripts
                 if (Physics.Raycast(ray, out RaycastHit hit, 10))
                 {
                     Vector3 hitBlock = Vector3.zero;
-                    if (Input.GetMouseButtonDown(0))
-                    {
-                        hitBlock = hit.point - hit.normal / 2f;
-                    }
+                    hitBlock = Input.GetMouseButtonDown(0) 
+                        ? hit.point - hit.normal / 2f 
+                        : hit.point + hit.normal / 2f;
 
                     Chunk thisChunk = hit.collider.gameObject.GetComponent<Chunk>();
 
                     int bx = (int) (Mathf.Round(hitBlock.x) - thisChunk.location.x);
                     int by = (int) (Mathf.Round(hitBlock.y) - thisChunk.location.y);
                     int bz = (int) (Mathf.Round(hitBlock.z) - thisChunk.location.z);
+
+                    Vector3Int neighbour;
+
+                    if (bx == _chunkDimensions.x)
+                    {
+                        neighbour = new Vector3Int(thisChunk.location.x + _chunkDimensions.x,
+                            thisChunk.location.y, thisChunk.location.z);
+                        thisChunk = chunks[neighbour];
+                        bx = 0;
+                    } 
+                    else if (bx == -1)
+                    {
+                        neighbour = new Vector3Int(thisChunk.location.x - _chunkDimensions.x,
+                            thisChunk.location.y, thisChunk.location.z);
+                        thisChunk = chunks[neighbour];
+                        bx = _chunkDimensions.x - 1;
+                    }
+                    else if (by == _chunkDimensions.y)
+                    {
+                        neighbour = new Vector3Int(thisChunk.location.x,
+                            thisChunk.location.y + _chunkDimensions.y, thisChunk.location.z);
+                        thisChunk = chunks[neighbour];
+                        by = 0;
+                    } 
+                    else if (by == -1)
+                    {
+                        neighbour = new Vector3Int(thisChunk.location.x,
+                            thisChunk.location.y - _chunkDimensions.y, thisChunk.location.z);
+                        thisChunk = chunks[neighbour];
+                        by = _chunkDimensions.y - 1;
+                    }
+                    else if (bz == _chunkDimensions.z)
+                    {
+                        neighbour = new Vector3Int(thisChunk.location.x,
+                            thisChunk.location.y, thisChunk.location.z + _chunkDimensions.z);
+                        thisChunk = chunks[neighbour];
+                        bz = 0;
+                    } 
+                    else if (bz == -1)
+                    {
+                        neighbour = new Vector3Int(thisChunk.location.x,
+                            thisChunk.location.y, thisChunk.location.z - _chunkDimensions.z);
+                        thisChunk = chunks[neighbour];
+                        bz = _chunkDimensions.z - 1;
+                    }
+                    
                     int i = bx + _chunkDimensions.x * (by + _chunkDimensions.z * bz);
-                    thisChunk.chunkData[i] = EBlockType.Air;
+
+                    thisChunk.chunkData[i] = Input.GetMouseButtonDown(0) 
+                        ? EBlockType.Air 
+                        : _buildType;
+
                     DestroyImmediate(thisChunk.GetComponent<MeshFilter>());
                     DestroyImmediate(thisChunk.GetComponent<MeshRenderer>());
                     DestroyImmediate(thisChunk.GetComponent<MeshCollider>());
@@ -75,10 +124,10 @@ namespace Scripts
             }
         }
 
-        private EBlockType buildType;
+        private EBlockType _buildType = EBlockType.Dirt;
         public void SetBuildType(int type)
         {
-            buildType = (EBlockType) type;
+            _buildType = (EBlockType) type;
         }
 
         private IEnumerator BuildCoordinator()
