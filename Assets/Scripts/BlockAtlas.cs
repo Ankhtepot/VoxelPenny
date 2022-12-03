@@ -54,7 +54,7 @@ namespace S2_Quad
                 {EBlockType.Gold, new Vector2Int(0, 13)},
                 {EBlockType.Bedrock, new Vector2Int(3, 14)},
                 {EBlockType.Diamond, new Vector2Int(2, 12)},
-                {EBlockType.NoCrack, new Vector2Int(0, 1)},
+                {EBlockType.NoCrack, new Vector2Int(12, 0)}, // same as Air
                 {EBlockType.Crack1, new Vector2Int(0, 0)},
                 {EBlockType.Crack2, new Vector2Int(1, 0)},
                 {EBlockType.Crack3, new Vector2Int(2, 0)},
