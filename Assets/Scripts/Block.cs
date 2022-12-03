@@ -1,19 +1,18 @@
 ﻿using System.Collections.Generic;
 using DefaultNamespace;
-using DefaultNamespace.Extensions;
 using UnityEngine;
 using static MeshUtils;
 using static S2_Quad.BlockAtlas;
 
 public class Block
 {
-    public Vector3 position;
     public readonly Mesh mesh;
+    private Vector3 position;
     private readonly Chunk _parentChunk;
     
     private readonly List<EBlockType> _ignoredNeighbourTypes = new() {EBlockType.Air, EBlockType.Water};
 
-    public Block(EBlockType type, Vector3Int offset, Chunk chunk, TileConfiguration tileConfiguration = null)
+    public Block(EBlockType type, EBlockType hType, Vector3Int offset, Chunk chunk, TileConfiguration tileConfiguration = null)
     {
         _parentChunk = chunk;
         Vector3Int blockLocalPos = (offset - chunk.location);
@@ -24,32 +23,32 @@ public class Block
         bool isTileConfigured = tileConfiguration;
         if (!HasSolidNeighbour(blockLocalPos.x, blockLocalPos.y - 1, blockLocalPos.z))
         {
-            quads.Add(new Quad(EBlockSide.Bottom, offset, isTileConfigured ? tileConfiguration!.bottomTile : type).mesh);
+            quads.Add(new Quad(EBlockSide.Bottom, offset, isTileConfigured ? tileConfiguration!.bottomTile : type, hType).mesh);
         }
 
         if (!HasSolidNeighbour(blockLocalPos.x, blockLocalPos.y + 1, blockLocalPos.z))
         {
-            quads.Add(new Quad(EBlockSide.Top, offset, isTileConfigured ? tileConfiguration!.topTile : type).mesh);
+            quads.Add(new Quad(EBlockSide.Top, offset, isTileConfigured ? tileConfiguration!.topTile : type, hType).mesh);
         }
 
         if (!HasSolidNeighbour(blockLocalPos.x - 1, blockLocalPos.y, blockLocalPos.z))
         {
-            quads.Add(new Quad(EBlockSide.Left, offset, isTileConfigured ? tileConfiguration!.leftTile : type).mesh);
+            quads.Add(new Quad(EBlockSide.Left, offset, isTileConfigured ? tileConfiguration!.leftTile : type, hType).mesh);
         }
 
         if (!HasSolidNeighbour(blockLocalPos.x + 1, blockLocalPos.y, blockLocalPos.z))
         {
-            quads.Add(new Quad(EBlockSide.Right, offset, isTileConfigured ? tileConfiguration!.rightTile : type).mesh);
+            quads.Add(new Quad(EBlockSide.Right, offset, isTileConfigured ? tileConfiguration!.rightTile : type, hType).mesh);
         }
 
         if (!HasSolidNeighbour(blockLocalPos.x, blockLocalPos.y, blockLocalPos.z + 1))
         {
-            quads.Add(new Quad(EBlockSide.Front, offset, isTileConfigured ? tileConfiguration!.frontTile : type).mesh);
+            quads.Add(new Quad(EBlockSide.Front, offset, isTileConfigured ? tileConfiguration!.frontTile : type, hType).mesh);
         }
 
         if (!HasSolidNeighbour(blockLocalPos.x, blockLocalPos.y, blockLocalPos.z - 1))
         {
-            quads.Add(new Quad(EBlockSide.Back, offset, isTileConfigured ? tileConfiguration!.backTile : type).mesh);
+            quads.Add(new Quad(EBlockSide.Back, offset, isTileConfigured ? tileConfiguration!.backTile : type, hType).mesh);
         }
 
         if (quads.Count == 0) return;
@@ -58,7 +57,7 @@ public class Block
         mesh.name = $"Cube_{position.x}_{position.y}_{position.z}_generated";
     }
 
-    public bool HasSolidNeighbour(int x, int y, int z)
+    private bool HasSolidNeighbour(int x, int y, int z)
     {
         if (x < 0 || x >= _parentChunk.width
                   || y < 0 || y >= _parentChunk.height

@@ -31,7 +31,7 @@ public class BlockSpawner : MonoBehaviour
             SingleBlock newBlock = Instantiate(blockPrefab, new Vector3(currentX + currentX * spacing, currentY + currentY * spacing, 0), Quaternion.identity)
                 .GetComponent<SingleBlock>();
 
-            newBlock.BuildBlock(type, configuration);
+            newBlock.BuildBlock(type, EBlockType.Air, configuration);
 
             currentX += 1;
             

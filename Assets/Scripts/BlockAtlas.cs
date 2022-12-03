@@ -17,8 +17,6 @@ namespace S2_Quad
         private const float SizeInTiles = 16f;
         private const float Step = 1 / SizeInTiles;
         
-        private static readonly BlockUVs BlockUVs;
-
         private static readonly Dictionary<EBlockType, Vector2Int> Map;
 
         [Serializable]
@@ -66,23 +64,23 @@ namespace S2_Quad
         static BlockAtlas()
         {
             Map = BuildMap();
-            BlockUVs = new BlockUVs();
         }
 
         public static BlockUVs GetUVs(EBlockType desiredBlockType)
         {
             Vector2Int location = Map[desiredBlockType];
+            BlockUVs blockUvs = new();
+            
+            blockUvs.uv00.x = location.x * Step;
+            blockUvs.uv00.y = location.y * Step;
+            blockUvs.uv01.x = location.x * Step + Step;
+            blockUvs.uv01.y = location.y * Step;
+            blockUvs.uv10.x = location.x * Step;
+            blockUvs.uv10.y = location.y * Step + Step;
+            blockUvs.uv11.x = location.x * Step + Step;
+            blockUvs.uv11.y = location.y * Step + Step;
 
-            BlockUVs.uv00.x = location.x * Step;
-            BlockUVs.uv00.y = location.y * Step;
-            BlockUVs.uv01.x = location.x * Step + Step;
-            BlockUVs.uv01.y = location.y * Step;
-            BlockUVs.uv10.x = location.x * Step;
-            BlockUVs.uv10.y = location.y * Step + Step;
-            BlockUVs.uv11.x = location.x * Step + Step;
-            BlockUVs.uv11.y = location.y * Step + Step;
-
-            return BlockUVs;
+            return blockUvs;
         }
     }
 }

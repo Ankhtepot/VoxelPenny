@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using DefaultNamespace;
 using Scripts;
 using UnityEngine;
-using VertexData = System.Tuple<UnityEngine.Vector3, UnityEngine.Vector3, UnityEngine.Vector2>;
+using VertexData = System.Tuple<UnityEngine.Vector3, UnityEngine.Vector3, UnityEngine.Vector2, UnityEngine.Vector2>;
 
 public static class MeshUtils
 {
@@ -38,7 +37,8 @@ public static class MeshUtils
                 Vector3 v = meshes.ElementAt(i).vertices[j];
                 Vector3 n = meshes.ElementAt(i).normals[j];
                 Vector2 u = meshes.ElementAt(i).uv[j];
-                VertexData p = new(v, n, u);
+                Vector2 u2 = meshes.ElementAt(i).uv2[j];
+                VertexData p = new(v, n, u, u2);
 
                 if (!pointsHash.Contains(p))
                 {
@@ -54,7 +54,8 @@ public static class MeshUtils
                 Vector3 v = meshes.ElementAt(i).vertices[triPoint];
                 Vector3 n = meshes.ElementAt(i).normals[triPoint];
                 Vector2 u = meshes.ElementAt(i).uv[triPoint];
-                VertexData p = new(v, n, u);
+                Vector2 u2 = meshes.ElementAt(i).uv2[triPoint];
+                VertexData p = new(v, n, u, u2);
 
                 pointsOrder.TryGetValue(p, out int index);
                 tris.Add(index);
@@ -69,22 +70,25 @@ public static class MeshUtils
         return mesh;
     }
 
-    public static void ExtractArrays(Dictionary<VertexData, int> list, Mesh mesh)
+    private static void ExtractArrays(Dictionary<VertexData, int> list, Mesh mesh)
     {
         List<Vector3> verts = new();
         List<Vector3> norms = new();
         List<Vector2> uvs = new();
+        List<Vector2> uvs2 = new();
 
         foreach (VertexData v in list.Keys)
         {
             verts.Add(v.Item1);
             norms.Add(v.Item2);
             uvs.Add(v.Item3);
+            uvs2.Add(v.Item4);
         }
 
         mesh.vertices = verts.ToArray();
         mesh.normals = norms.ToArray();
         mesh.uv = uvs.ToArray();
+        mesh.uv2 = uvs2.ToArray();
     }
 
     public static float fBM(float x, float z, PerlinNoiseSettings pns) // finite Brownian Motion
@@ -105,11 +109,6 @@ public static class MeshUtils
         }
 
         return total + heightOffset;
-    }
-
-    public static float fBM3D(float x, float y, float z, CavePNSettings settings) // finite Brownian Motion 3D
-    {
-        return fBM3D(x, y, z, settings.Octaves, settings.Scale, settings.HeightScale, settings.HeightOffset);
     }
 
     public static float

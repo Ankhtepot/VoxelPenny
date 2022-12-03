@@ -28,6 +28,7 @@ public class Chunk : MonoBehaviour
     // z = i / (Width * Height)
 
     public EBlockType[] chunkData;
+    public EBlockType[] healthData;
     [HideInInspector] public MeshRenderer MeshRenderer;
 
     private CalculateBlockTypes _calculateBlockTypes;
@@ -70,7 +71,9 @@ public class Chunk : MonoBehaviour
             {
                 for (int x = 0; x < width; x++)
                 {
-                    EBlockType blockType = chunkData[FlattenXYZ(x, y, z)];
+                    int index = FlattenXYZ(x, y, z);
+                    EBlockType blockType = chunkData[index];
+                    EBlockType healthType = healthData[index];
 
                     TileConfiguration configuration = blockType switch
                     {
@@ -79,7 +82,7 @@ public class Chunk : MonoBehaviour
                     };
 
                     blocks[x, y, z] = new Block(
-                        blockType,
+                        blockType, healthType,
                         new Vector3Int(x, y, z) + location,
                         this,
                         configuration
@@ -108,7 +111,9 @@ public class Chunk : MonoBehaviour
         jobs.outputMesh.SetVertexBufferParams(vertexStart,
             new VertexAttributeDescriptor(VertexAttribute.Position),
             new VertexAttributeDescriptor(VertexAttribute.Normal, stream: 1),
-            new VertexAttributeDescriptor(VertexAttribute.TexCoord0, stream: 2));
+            new VertexAttributeDescriptor(VertexAttribute.TexCoord0, stream: 2),
+            new VertexAttributeDescriptor(VertexAttribute.TexCoord1, stream: 3)
+        );
 
         JobHandle handle = jobs.Schedule(inputMeshes.Count, 4);
 
@@ -144,8 +149,10 @@ public class Chunk : MonoBehaviour
     private void BuildChunk()
     {
         chunkData = new EBlockType[_blockCount];
+        healthData = new EBlockType[_blockCount];
 
         NativeArray<EBlockType> blockTypes = new(chunkData, Allocator.Persistent);
+        NativeArray<EBlockType> healthTypes = new(healthData, Allocator.Persistent);
 
         Random[] randomArray = new Random[_blockCount];
         System.Random seed = new();
@@ -158,6 +165,7 @@ public class Chunk : MonoBehaviour
         _calculateBlockTypes = new CalculateBlockTypes
         {
             chunkData = blockTypes,
+            healthData = healthTypes,
             width = width,
             height = height,
             location = location,
@@ -167,7 +175,9 @@ public class Chunk : MonoBehaviour
         _jobHandle = _calculateBlockTypes.Schedule(chunkData.Length, 64);
         _jobHandle.Complete();
         _calculateBlockTypes.chunkData.CopyTo(chunkData);
+        _calculateBlockTypes.healthData.CopyTo(healthData);
         blockTypes.Dispose();
+        healthTypes.Dispose();
         RandomArray.Dispose();
     }
     
@@ -198,21 +208,27 @@ public class Chunk : MonoBehaviour
 
             NativeArray<float3> uvs = new(vCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
             data.GetUVs(0, uvs.Reinterpret<Vector3>());
+            
+            NativeArray<float3> uvs2 = new(vCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+            data.GetUVs(1, uvs2.Reinterpret<Vector3>());
 
             NativeArray<Vector3> outputVerts = outputMesh.GetVertexData<Vector3>();
             NativeArray<Vector3> outputNormals = outputMesh.GetVertexData<Vector3>(stream: 1);
             NativeArray<Vector3> outputUVs = outputMesh.GetVertexData<Vector3>(stream: 2);
+            NativeArray<Vector3> outputUVs2 = outputMesh.GetVertexData<Vector3>(stream: 3);
 
             for (int i = 0; i < vCount; i++)
             {
                 outputVerts[i + vStart] = verts[i];
                 outputNormals[i + vStart] = normals[i];
                 outputUVs[i + vStart] = uvs[i];
+                outputUVs2[i + vStart] = uvs2[i];
             }
 
             verts.Dispose();
             normals.Dispose();
             uvs.Dispose();
+            uvs2.Dispose();
 
             int tStart = triStart[index];
             int tCount = data.GetSubMesh(0).indexCount;
@@ -240,6 +256,7 @@ public class Chunk : MonoBehaviour
     private struct CalculateBlockTypes : IJobParallelFor
     {
         public NativeArray<EBlockType> chunkData;
+        public NativeArray<EBlockType> healthData;
         public int width;
         public int height;
         public Vector3 location;
@@ -277,6 +294,8 @@ public class Chunk : MonoBehaviour
                            caveSettings.Scale, caveSettings.HeightScale,
                            caveSettings.HeightOffset);
 
+            healthData[i] = EBlockType.NoCrack;
+            
             if (y == 0)
             {
                 chunkData[i] = EBlockType.Bedrock;
