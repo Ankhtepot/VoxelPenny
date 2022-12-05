@@ -17,13 +17,13 @@ namespace Scripts
         public WorldLayers worldLayers;
         public static WorldLayers WorldLayers;
 
-        private static Vector3Int _worldDimensions = new(5, 5, 5);
+        public static Vector3Int WorldDimensions = new(5, 5, 5);
+        public static Vector3Int ChunkDimensions = new(10, 10, 10);
         private static Vector3Int _extraWorldDimensions = new(5, 5, 5);
-        private static Vector3Int _chunkDimensions = new(10, 10, 10);
 
-        private HashSet<Vector3Int> chunkChecker = new();
-        private HashSet<Vector2Int> chunkColumns = new();
-        private Dictionary<Vector3Int, Chunk> chunks = new();
+        public HashSet<Vector3Int> ChunkChecker = new();
+        public HashSet<Vector2Int> ChunkColumns = new();
+        public Dictionary<Vector3Int, Chunk> Chunks = new();
 
         private Vector3Int _lastBuildPosition;
         private const int DrawRadius = 4;
@@ -42,8 +42,9 @@ namespace Scripts
                 grapher.gameObject.SetActive(!disableGraphersOnStart);
             }
 
-            loadingBar.maxValue = _worldDimensions.x * _worldDimensions.z;
+            loadingBar.maxValue = WorldDimensions.x * WorldDimensions.z;
             loadingBar.value = 0;
+            
             StartCoroutine(BuildWorld());
         }
 
@@ -54,8 +55,7 @@ namespace Scripts
                 Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
                 if (Physics.Raycast(ray, out RaycastHit hit, 10))
                 {
-                    Vector3 hitBlock = Vector3.zero;
-                    hitBlock = Input.GetMouseButtonDown(0) 
+                    Vector3 hitBlock = Input.GetMouseButtonDown(0) 
                         ? hit.point - hit.normal / 2f 
                         : hit.point + hit.normal / 2f;
 
@@ -67,60 +67,101 @@ namespace Scripts
 
                     Vector3Int neighbour;
 
-                    if (bx == _chunkDimensions.x)
+                    if (bx == ChunkDimensions.x)
                     {
-                        neighbour = new Vector3Int(thisChunk.location.x + _chunkDimensions.x,
+                        neighbour = new Vector3Int(thisChunk.location.x + ChunkDimensions.x,
                             thisChunk.location.y, thisChunk.location.z);
-                        thisChunk = chunks[neighbour];
+                        thisChunk = Chunks[neighbour];
                         bx = 0;
                     } 
                     else if (bx == -1)
                     {
-                        neighbour = new Vector3Int(thisChunk.location.x - _chunkDimensions.x,
+                        neighbour = new Vector3Int(thisChunk.location.x - ChunkDimensions.x,
                             thisChunk.location.y, thisChunk.location.z);
-                        thisChunk = chunks[neighbour];
-                        bx = _chunkDimensions.x - 1;
+                        thisChunk = Chunks[neighbour];
+                        bx = ChunkDimensions.x - 1;
                     }
-                    else if (by == _chunkDimensions.y)
+                    else if (by == ChunkDimensions.y)
                     {
                         neighbour = new Vector3Int(thisChunk.location.x,
-                            thisChunk.location.y + _chunkDimensions.y, thisChunk.location.z);
-                        thisChunk = chunks[neighbour];
+                            thisChunk.location.y + ChunkDimensions.y, thisChunk.location.z);
+                        thisChunk = Chunks[neighbour];
                         by = 0;
                     } 
                     else if (by == -1)
                     {
                         neighbour = new Vector3Int(thisChunk.location.x,
-                            thisChunk.location.y - _chunkDimensions.y, thisChunk.location.z);
-                        thisChunk = chunks[neighbour];
-                        by = _chunkDimensions.y - 1;
+                            thisChunk.location.y - ChunkDimensions.y, thisChunk.location.z);
+                        thisChunk = Chunks[neighbour];
+                        by = ChunkDimensions.y - 1;
                     }
-                    else if (bz == _chunkDimensions.z)
+                    else if (bz == ChunkDimensions.z)
                     {
                         neighbour = new Vector3Int(thisChunk.location.x,
-                            thisChunk.location.y, thisChunk.location.z + _chunkDimensions.z);
-                        thisChunk = chunks[neighbour];
+                            thisChunk.location.y, thisChunk.location.z + ChunkDimensions.z);
+                        thisChunk = Chunks[neighbour];
                         bz = 0;
                     } 
                     else if (bz == -1)
                     {
                         neighbour = new Vector3Int(thisChunk.location.x,
-                            thisChunk.location.y, thisChunk.location.z - _chunkDimensions.z);
-                        thisChunk = chunks[neighbour];
-                        bz = _chunkDimensions.z - 1;
+                            thisChunk.location.y, thisChunk.location.z - ChunkDimensions.z);
+                        thisChunk = Chunks[neighbour];
+                        bz = ChunkDimensions.z - 1;
                     }
                     
-                    int i = bx + _chunkDimensions.x * (by + _chunkDimensions.z * bz);
+                    int i = bx + ChunkDimensions.x * (by + ChunkDimensions.z * bz);
 
-                    thisChunk.chunkData[i] = Input.GetMouseButtonDown(0) 
-                        ? EBlockType.Air 
-                        : _buildType;
+                    if (Input.GetMouseButtonDown(0))
+                    {
+                        if (GetHealthByType(thisChunk.chunkData[i]) == -1) return;
+                        
+                        if (thisChunk.healthData[i] == EBlockType.NoCrack)
+                        {
+                            StartCoroutine(HealBlock(thisChunk, i));
+                        }
+                        
+                        thisChunk.healthData[i]++;
 
-                    DestroyImmediate(thisChunk.GetComponent<MeshFilter>());
-                    DestroyImmediate(thisChunk.GetComponent<MeshRenderer>());
-                    DestroyImmediate(thisChunk.GetComponent<MeshCollider>());
-                    thisChunk.CreateChunk(_chunkDimensions, thisChunk.location, false);
+                        if (thisChunk.healthData[i] == EBlockType.NoCrack + GetHealthByType(thisChunk.chunkData[i]))
+                        {
+                            thisChunk.chunkData[i] = EBlockType.Air;
+                        }
+                    }
+                    else
+                    {
+                        thisChunk.chunkData[i] = _buildType;
+                        thisChunk.healthData[i] = EBlockType.NoCrack;
+                    }
+
+                    RedrawChunk(thisChunk);
                 }
+            }
+        }
+
+        public void SaveWorld()
+        {
+            FileSaver.Save(this);
+        }
+
+        private void RedrawChunk(Chunk c)
+        {
+            DestroyImmediate(c.GetComponent<MeshFilter>());
+            DestroyImmediate(c.GetComponent<MeshRenderer>());
+            DestroyImmediate(c.GetComponent<MeshCollider>());
+            c.CreateChunk(ChunkDimensions, c.location, false);
+        }
+
+        private WaitForSeconds _threeSeconds = new(3);
+
+        private IEnumerator HealBlock(Chunk c, int blockIndex)
+        {
+            yield return _threeSeconds;
+            if (c.chunkData[blockIndex] != EBlockType.Air)
+            {
+                c.healthData[blockIndex] = EBlockType.NoCrack;
+                
+                RedrawChunk(c);
             }
         }
 
@@ -145,39 +186,39 @@ namespace Scripts
 
         private void BuildChunkColumn(int x, int z, bool meshEnabled = true)
         {
-            for (int y = 0; y < _worldDimensions.y; y++)
+            for (int y = 0; y < WorldDimensions.y; y++)
             {
-                Vector3Int position = new(x, _chunkDimensions.y * y, z);
+                Vector3Int position = new(x, ChunkDimensions.y * y, z);
 
-                if (!chunkChecker.Contains(position))
+                if (!ChunkChecker.Contains(position))
                 {
                     GameObject chunk = Instantiate(chunkPrefab, transform, true);
                     Chunk chunkComponent = chunk.GetComponent<Chunk>();
                     chunk.name = $"Chunk_{position.x}_{position.y}_{position.z}";
-                    chunkComponent.CreateChunk(_chunkDimensions, position);
-                    chunkChecker.Add(position);
-                    chunks.Add(position, chunkComponent);
+                    chunkComponent.CreateChunk(ChunkDimensions, position);
+                    ChunkChecker.Add(position);
+                    Chunks.Add(position, chunkComponent);
                 }
                 
-                chunks[position].MeshRenderer.enabled = meshEnabled;
+                Chunks[position].MeshRenderer.enabled = meshEnabled;
             }
 
-            chunkColumns.Add(new Vector2Int(x, z));
+            ChunkColumns.Add(new Vector2Int(x, z));
         }
 
         private IEnumerator BuildExtraWorld()
         {
-            int zEnd = _worldDimensions.z + _extraWorldDimensions.z;
-            int zStart = _worldDimensions.z;
+            int zEnd = WorldDimensions.z + _extraWorldDimensions.z;
+            int zStart = WorldDimensions.z;
             
-            int xEnd = _worldDimensions.x + _extraWorldDimensions.x;
-            int xStart = _worldDimensions.x;
+            int xEnd = WorldDimensions.x + _extraWorldDimensions.x;
+            int xStart = WorldDimensions.x;
 
             for (int z = zStart; z < zEnd; z++)
             {
                 for (int x = 0; x < xEnd; x++)
                 {
-                    BuildChunkColumn(x * _chunkDimensions.x, z * _chunkDimensions.z, false);
+                    BuildChunkColumn(x * ChunkDimensions.x, z * ChunkDimensions.z, false);
                     yield return null;
                 }
             }
@@ -186,7 +227,7 @@ namespace Scripts
             {
                 for (int x = xStart; x < xEnd; x++)
                 {
-                    BuildChunkColumn(x * _chunkDimensions.x, z * _chunkDimensions.z, false);
+                    BuildChunkColumn(x * ChunkDimensions.x, z * ChunkDimensions.z, false);
                     yield return null;
                 }
             }
@@ -198,11 +239,11 @@ namespace Scripts
             loadingBar.gameObject.SetActive(true);
             fpc.SetActive(false);
 
-            for (int z = 0; z < _worldDimensions.z; z++)
+            for (int z = 0; z < WorldDimensions.z; z++)
             {
-                for (int x = 0; x < _worldDimensions.x; x++)
+                for (int x = 0; x < WorldDimensions.x; x++)
                 {
-                    BuildChunkColumn(x * _chunkDimensions.x, z * _chunkDimensions.z);
+                    BuildChunkColumn(x * ChunkDimensions.x, z * ChunkDimensions.z);
                     loadingBar.value += 1;
                     yield return null;
                 }
@@ -211,15 +252,15 @@ namespace Scripts
             mCamera.SetActive(false);
             loadingBar.gameObject.SetActive(false);
 
-            float xPos = (_chunkDimensions.x * _worldDimensions.x) / 2f;
-            float zPos = (_chunkDimensions.z * _worldDimensions.z) / 2f;
+            float xPos = (ChunkDimensions.x * WorldDimensions.x) / 2f;
+            float zPos = (ChunkDimensions.z * WorldDimensions.z) / 2f;
             float yPos = MeshUtils.fBM(xPos, zPos, worldLayers.SurfaceSettings) + 1;
 
             fpc.transform.position = new Vector3(xPos, yPos, zPos);
             fpc.SetActive(true);
             _lastBuildPosition = Vector3Int.CeilToInt(fpc.transform.position);
             StartCoroutine(BuildCoordinator());
-            // StartCoroutine(UpdateWorld());
+            StartCoroutine(UpdateWorld());
             StartCoroutine(BuildExtraWorld());
         }
 
@@ -228,12 +269,12 @@ namespace Scripts
         {
             while (true)
             {
-                if ((_lastBuildPosition - fpc.transform.position).magnitude > _chunkDimensions.x)
+                if ((_lastBuildPosition - fpc.transform.position).magnitude > ChunkDimensions.x)
                 {
                     Vector3 fpcPosition = fpc.transform.position;
                     _lastBuildPosition = Vector3Int.CeilToInt(fpcPosition);
-                    int posX = (int) (fpcPosition.x / _chunkDimensions.x) * _chunkDimensions.x;
-                    int posZ = (int) (fpcPosition.z / _chunkDimensions.z) * _chunkDimensions.z;
+                    int posX = (int) (fpcPosition.x / ChunkDimensions.x) * ChunkDimensions.x;
+                    int posZ = (int) (fpcPosition.z / ChunkDimensions.z) * ChunkDimensions.z;
                     _buildQueue.Enqueue(BuildRecursiveWorld(posX, posZ, DrawRadius));
                     _buildQueue.Enqueue(HideColumns(posX, posZ));
                 }
@@ -244,12 +285,12 @@ namespace Scripts
 
         private void HideChunkColumn(int x, int z)
         {
-            for (int y = 0; y < _worldDimensions.y; y++)
+            for (int y = 0; y < WorldDimensions.y; y++)
             {
-                Vector3Int pos = new(x, y * _chunkDimensions.y, z);
-                if (chunkChecker.Contains(pos))
+                Vector3Int pos = new(x, y * ChunkDimensions.y, z);
+                if (ChunkChecker.Contains(pos))
                 {
-                    chunks[pos].MeshRenderer.enabled = false;
+                    Chunks[pos].MeshRenderer.enabled = false;
                 }
             }
         }
@@ -257,9 +298,9 @@ namespace Scripts
         private IEnumerator HideColumns(int x, int z)
         {
             Vector2Int fpcPos = new(x, z);
-            foreach (Vector2Int chunkColumn in chunkColumns)
+            foreach (Vector2Int chunkColumn in ChunkColumns)
             {
-                if ((chunkColumn - fpcPos).magnitude >= DrawRadius * _chunkDimensions.x)
+                if ((chunkColumn - fpcPos).magnitude >= DrawRadius * ChunkDimensions.x)
                 {
                     HideChunkColumn(chunkColumn.x, chunkColumn.y);
                 }
@@ -273,20 +314,20 @@ namespace Scripts
             int nextRad = rad - 1;
             if (rad <= 0) yield break;
             
-            BuildChunkColumn(x, z + _chunkDimensions.z);
-            _buildQueue.Enqueue(BuildRecursiveWorld(x, z + _chunkDimensions.z, nextRad));
+            BuildChunkColumn(x, z + ChunkDimensions.z);
+            _buildQueue.Enqueue(BuildRecursiveWorld(x, z + ChunkDimensions.z, nextRad));
             yield return null;
             
-            BuildChunkColumn(x, z - _chunkDimensions.z);
-            _buildQueue.Enqueue(BuildRecursiveWorld(x, z - _chunkDimensions.z, nextRad));
+            BuildChunkColumn(x, z - ChunkDimensions.z);
+            _buildQueue.Enqueue(BuildRecursiveWorld(x, z - ChunkDimensions.z, nextRad));
             yield return null;
             
-            BuildChunkColumn(x + _chunkDimensions.x, z );
-            _buildQueue.Enqueue(BuildRecursiveWorld(x + _chunkDimensions.x, z, nextRad));
+            BuildChunkColumn(x + ChunkDimensions.x, z );
+            _buildQueue.Enqueue(BuildRecursiveWorld(x + ChunkDimensions.x, z, nextRad));
             yield return null;
             
-            BuildChunkColumn(x - _chunkDimensions.x, z );
-            _buildQueue.Enqueue(BuildRecursiveWorld(x - _chunkDimensions.x, z, nextRad));
+            BuildChunkColumn(x - ChunkDimensions.x, z );
+            _buildQueue.Enqueue(BuildRecursiveWorld(x - ChunkDimensions.x, z, nextRad));
             yield return null;
         }
     }

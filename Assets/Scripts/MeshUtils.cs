@@ -16,6 +16,8 @@ public static class MeshUtils
         Back,
     }
 
+    public static int[] blockTypeHealth = { };
+
     public static Mesh MergeMeshes(IEnumerable<Mesh> inputMeshes)
     {
         Mesh mesh = new();

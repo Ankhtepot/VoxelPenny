@@ -40,6 +40,28 @@ namespace S2_Quad
             Crack3 = 24,
             Crack4 = 25,
         }
+
+        public static int GetHealthByType(EBlockType blockType) => blockType switch
+        {
+            EBlockType.ConfiguredGrassCube => 2,
+            EBlockType.ConfiguredSandCube => 3,
+            EBlockType.WallSmallStones => 4,
+            EBlockType.Dirt => 2,
+            EBlockType.GreenGrassTop => 2,
+            EBlockType.GreenGrassSide => 2,
+            EBlockType.Water => 1,
+            EBlockType.Sand => 3,
+            EBlockType.Air => -1,
+            EBlockType.Gold => 4,
+            EBlockType.Bedrock => -1,
+            EBlockType.Diamond => 4,
+            EBlockType.NoCrack => 1,
+            EBlockType.Crack1 => -1,
+            EBlockType.Crack2 => -1,
+            EBlockType.Crack3 => -1,
+            EBlockType.Crack4 => -1,
+            _ => throw new ArgumentOutOfRangeException(nameof(blockType), blockType, $"Add {blockType} to health tab!")
+        };
         
         private static Dictionary<EBlockType, Vector2Int> BuildMap() =>
             new()
@@ -52,7 +74,7 @@ namespace S2_Quad
                 {EBlockType.Water, new Vector2Int(15, 3)},
                 {EBlockType.Air, new Vector2Int(12, 0)},
                 {EBlockType.Gold, new Vector2Int(0, 13)},
-                {EBlockType.Bedrock, new Vector2Int(3, 14)},
+                {EBlockType.Bedrock, new Vector2Int(5, 13)},
                 {EBlockType.Diamond, new Vector2Int(2, 12)},
                 {EBlockType.NoCrack, new Vector2Int(12, 0)}, // same as Air
                 {EBlockType.Crack1, new Vector2Int(0, 0)},
