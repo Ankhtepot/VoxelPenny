@@ -792,6 +792,7 @@ MonoBehaviour:
   fpc: {fileID: 1259757676}
   loadingBar: {fileID: 757390023}
   disableGraphersOnStart: 1
+  loadFromFile: 1
   worldLayers:
     surfaceLayer: {fileID: 11400000, guid: e1f02c86677413542872ebca442a9019, type: 2}
     bedrockLayer: {fileID: 11400000, guid: c7f46ba15eacfd047b77e76662056b50, type: 2}

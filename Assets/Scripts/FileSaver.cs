@@ -91,4 +91,22 @@ public static class FileSaver
         file.Close();
         Debug.Log($"Saving World to File: {filename}");
     }
+
+    public static WorldData Load()
+    {
+        string filename = BuildFilename();
+        
+        if (File.Exists(filename))
+        {
+            BinaryFormatter bf = new BinaryFormatter();
+            FileStream file = File.Open(filename, FileMode.Open);
+            wd = new WorldData();
+            wd = bf.Deserialize(file) as WorldData;
+            file.Close();
+            Debug.Log($"loading World data from File: {filename}");
+            return wd;
+        }
+
+        return null;
+    }
 }

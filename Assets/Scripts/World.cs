@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Search;
 using UnityEngine;
 using UnityEngine.UI;
 using static S2_Quad.BlockAtlas;
@@ -13,6 +14,7 @@ namespace Scripts
         public GameObject fpc;
         public Slider loadingBar;
         public bool disableGraphersOnStart;
+        public bool loadFromFile = false;
 
         public WorldLayers worldLayers;
         public static WorldLayers WorldLayers;
@@ -44,6 +46,11 @@ namespace Scripts
 
             loadingBar.maxValue = WorldDimensions.x * WorldDimensions.z;
             loadingBar.value = 0;
+
+            if (loadFromFile)
+            {
+                StartCoroutine(LoadWorldFromFile());
+            }
             
             StartCoroutine(BuildWorld());
         }
@@ -142,6 +149,65 @@ namespace Scripts
         public void SaveWorld()
         {
             FileSaver.Save(this);
+        }
+
+        private IEnumerator LoadWorldFromFile()
+        {
+            WorldData wd = FileSaver.Load();
+
+            if (wd == null)
+            {
+                StartCoroutine(BuildWorld());
+                yield break;
+            }
+            
+            ChunkChecker.Clear();
+            for (int i = 0; i < wd.chunkCheckerValue.Length; i+=3)
+            {
+                ChunkChecker.Add(new(
+                    wd.chunkCheckerValue[i],
+                    wd.chunkCheckerValue[i+1],
+                    wd.chunkCheckerValue[i+2]
+                ));
+            }
+            
+            ChunkColumns.Clear();
+            for (int i = 0; i < wd.chunkColumnValues.Length; i+=2)
+            {
+                ChunkColumns.Add(new(
+                    wd.chunkColumnValues[i],
+                    wd.chunkColumnValues[i+1]
+                ));
+            }
+
+            int index = 0;
+            foreach (Vector3Int chunkPos in ChunkChecker)
+            {
+                GameObject chunk = Instantiate(chunkPrefab);
+                chunk.name = $"Chunk_{chunkPos.x}_{chunkPos.y}_{chunkPos.z}";
+                Chunk c = chunk.GetComponent<Chunk>();
+                int blockCount = ChunkDimensions.x * ChunkDimensions.y * ChunkDimensions.z;
+                c.chunkData = new EBlockType[blockCount];
+                c.healthData = new EBlockType[blockCount];
+
+                for (int i = 0; i < blockCount; i++)
+                {
+                    c.chunkData[i] = (EBlockType) wd.allChunkData[index];
+                    c.healthData[i] = EBlockType.NoCrack;
+                    index++;
+                }
+                
+                c.CreateChunk(ChunkDimensions, chunkPos, false);
+                Chunks.Add(chunkPos, c);
+                RedrawChunk(c);
+                
+                yield return null;
+            }
+
+            fpc.transform.position = new Vector3(wd.fpcX, wd.fpcY, wd.fpcZ);
+            mCamera.SetActive(false);
+            fpc.SetActive(true);
+            _lastBuildPosition = Vector3Int.CeilToInt(fpc.transform.position);
         }
 
         private void RedrawChunk(Chunk c)
