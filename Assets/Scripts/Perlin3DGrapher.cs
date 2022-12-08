@@ -1,33 +1,20 @@
-using System;
-using DefaultNamespace;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 [ExecuteInEditMode]
 public class Perlin3DGrapher : MonoBehaviour
 {
-    public Vector3Int dimensions = new(10, 10, 10);
-    public float heightScale = 2f;
-    [Range(0f, 1f)] public float scale = 0.5f;
+    Vector3 dimensions = new Vector3(10, 10, 10);
+    public float heightScale = 2;
+    [Range(0.0f, 1.0f)]
+    public float scale = 0.5f;
     public int octaves = 1;
-    public float heightOffset;
-    [Range(0.0f, 10.0f)] public float drawCutoff;
-    [SerializeField] private CavePNSettings settings;
+    public float heightOffset = 1;
+    [Range(0.0f, 10.0f)]
+    public float DrawCutOff = 1;
 
-    private int _width;
-    private int _height;
-    private int _depth;
-
-    private void Awake()
-    {
-        scale = settings.Scale;
-        octaves = settings.Octaves;
-        heightOffset = settings.HeightOffset;
-        heightScale = settings.HeightScale;
-        drawCutoff = settings.DrawCutoff;
-        SetWHD();
-    }
-
-    private void CreateCubes()
+    void CreateCubes()
     {
         for (int z = 0; z < dimensions.z; z++)
         {
@@ -37,22 +24,21 @@ public class Perlin3DGrapher : MonoBehaviour
                 {
                     GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
                     cube.name = "perlin_cube";
-                    cube.transform.parent = transform;
+                    cube.transform.parent = this.transform;
                     cube.transform.position = new Vector3(x, y, z);
                 }
             }
         }
     }
 
-    private void Graph()
+    void Graph()
     {
-        MeshRenderer[] cubes = GetComponentsInChildren<MeshRenderer>();
+        //destroy existing cubes
+        MeshRenderer[] cubes = this.GetComponentsInChildren<MeshRenderer>();
         if (cubes.Length == 0)
-        {
             CreateCubes();
-        }
 
-        if (cubes.Length < dimensions.x * dimensions.y * dimensions.z) return;
+        if (cubes.Length == 0) return;
 
         for (int z = 0; z < dimensions.z; z++)
         {
@@ -60,47 +46,18 @@ public class Perlin3DGrapher : MonoBehaviour
             {
                 for (int x = 0; x < dimensions.x; x++)
                 {
-                    try
-                    {
-                        float p3d = MeshUtils.fBM3D(x, y, z, settings.Octaves, settings.Scale, settings.HeightScale, settings.HeightOffset);
-                        cubes[FlattenXYZ(x, y, z)].enabled = p3d >= settings.DrawCutoff;
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e);
-                        throw;
-                    }
+                    float p3d = MeshUtils.fBM3D(x, y, z, octaves, scale, heightScale, heightOffset);
+                    if (p3d < DrawCutOff)
+                        cubes[x + (int)dimensions.x * (y + (int)dimensions.z * z)].enabled = false;
+                    else
+                        cubes[x + (int)dimensions.x * (y + (int)dimensions.z * z)].enabled = true;
                 }
             }
         }
     }
 
-    private void OnValidate()
+    void OnValidate()
     {
-        settings.Octaves = octaves;
-        settings.Scale = scale;
-        settings.HeightOffset = heightOffset;
-        settings.HeightScale = heightScale;
-        settings.DrawCutoff = drawCutoff;
         Graph();
-    }
-
-    private int FlattenXYZ(int x, int y, int z)
-    {
-        if (Math.Abs(dimensions.x - _width) > Single.Epsilon 
-            || Math.Abs(dimensions.y - _height) > Single.Epsilon 
-            || Math.Abs(dimensions.z - _depth) > Single.Epsilon)
-        {
-            SetWHD();
-        }
-
-        return x + _width * (y + _depth * z);
-    }
-
-    private void SetWHD()
-    {
-        _width = dimensions.x;
-        _height = dimensions.y;
-        _depth = dimensions.z;
     }
 }

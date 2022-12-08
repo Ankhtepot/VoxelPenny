@@ -8,6 +8,7 @@ public class CanvasNav : MonoBehaviour
     public List<Button> buttons;
     int buttonIndex = 0;
 
+    // Start is called before the first frame update
     void Start()
     {
         if (buttons != null)
@@ -33,7 +34,6 @@ public class CanvasNav : MonoBehaviour
 				}
 				buttonIndex--;
 				buttons[buttonIndex].Select();
-				buttons[buttonIndex].onClick?.Invoke();
 			}
 			else
 			{
@@ -45,7 +45,6 @@ public class CanvasNav : MonoBehaviour
 				}
 				buttonIndex++;
 				buttons[buttonIndex].Select();
-				buttons[buttonIndex].onClick?.Invoke();
 			}
 		}
 	}

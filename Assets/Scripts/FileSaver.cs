@@ -1,19 +1,18 @@
-﻿using System;
+using System;
+using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
-using S2_Quad;
-using Scripts;
-using UnityEngine;
 
 [Serializable]
 public class WorldData
 {
-    // private HashSet<Vector3Int> _chunkChecker = new();
-    // private HashSet<Vector2Int> _chunkColumns = new();
-    // private Dictionary<Vector3Int, Chunk> _chunks = new();
+    //HashSet<Vector3Int> chunkChecker = new HashSet<Vector3Int>();
+    //HashSet<Vector2Int> chunkColumns = new HashSet<Vector2Int>();
+    //Dictionary<Vector3Int, Chunk> chunks = new Dictionary<Vector3Int, Chunk>();
 
-    public int[] chunkCheckerValue;
+    public int[] chunkCheckerValues;
     public int[] chunkColumnValues;
     public int[] allChunkData;
     public bool[] chunkVisibility;
@@ -22,97 +21,94 @@ public class WorldData
     public int fpcY;
     public int fpcZ;
 
-    public WorldData()
-    {
-        
-    }
+    public WorldData() { }
 
     public WorldData(HashSet<Vector3Int> cc, HashSet<Vector2Int> cCols, Dictionary<Vector3Int, Chunk> chks, Vector3 fpc)
     {
-        chunkCheckerValue = new int[cc.Count * 3];
+        chunkCheckerValues = new int[cc.Count * 3];
         int index = 0;
-        foreach (Vector3Int vector3Int in cc)
+        foreach (Vector3Int v in cc)
         {
-            chunkCheckerValue[index] = vector3Int.x;
-            chunkCheckerValue[index + 1] = vector3Int.y;
-            chunkCheckerValue[index + 2] = vector3Int.z;
-            index += 3;
+            chunkCheckerValues[index] = v.x;
+            chunkCheckerValues[index + 1] = v.y;
+            chunkCheckerValues[index + 2] = v.z;
+            index = index + 3;
         }
 
-        index = 0;
         chunkColumnValues = new int[cCols.Count * 2];
-        foreach (Vector2Int vector2Int in cCols)
+        index = 0;
+        foreach (Vector2Int v in cCols)
         {
-            chunkColumnValues[index] = vector2Int.x;
-            chunkColumnValues[index + 1] = vector2Int.y;
-            index += 2;
+            chunkColumnValues[index] = v.x;
+            chunkColumnValues[index + 1] = v.y;
+            index = index + 2;
         }
 
-        index = 0;
-        int dimensionsSize = World.ChunkDimensions.x * World.ChunkDimensions.y * World.ChunkDimensions.z;
-        allChunkData = new int[chks.Count * dimensionsSize];
+        allChunkData = new int[chks.Count * World.chunkDimensions.x * World.chunkDimensions.y * World.chunkDimensions.z];
         chunkVisibility = new bool[chks.Count];
         int vIndex = 0;
-        foreach (Chunk c in chks.Values)
+        index = 0;
+        foreach (KeyValuePair<Vector3Int, Chunk> ch in chks)
         {
-            foreach (BlockAtlas.EBlockType blockType in c.chunkData)
+            foreach (MeshUtils.BlockType bt in ch.Value.chunkData)
             {
-                allChunkData[index] = (int)blockType;
+                allChunkData[index] = (int)bt;
                 index++;
             }
-
-            chunkVisibility[vIndex] = c.MeshRenderer.enabled;
+            chunkVisibility[vIndex] = ch.Value.meshRenderer.enabled;
             vIndex++;
         }
 
-        fpcX = (int) fpc.x;
-        fpcY = (int) fpc.y;
-        fpcZ = (int) fpc.z;
+        fpcX = (int)fpc.x;
+        fpcY = (int)fpc.y;
+        fpcZ = (int)fpc.z;
     }
 }
+
 
 public static class FileSaver
 {
     private static WorldData wd;
 
-    static string BuildFilename()
+    static string BuildFileName()
     {
-        return
-            $"{Application.persistentDataPath}/savedata/World_{World.ChunkDimensions.x}_{World.ChunkDimensions.y}_{World.ChunkDimensions.z}{World.WorldDimensions.x}_{World.WorldDimensions.x}_{World.WorldDimensions.x}.dat";
+        return Application.persistentDataPath + "/savedata/World_" +
+                                World.chunkDimensions.x + "_" +
+                                World.chunkDimensions.y + "_" +
+                                World.chunkDimensions.z + "_" +
+                                World.worldDimensions.x + "_" +
+                                World.worldDimensions.y + "_" +
+                                World.worldDimensions.z + ".dat";
     }
 
     public static void Save(World world)
     {
-        string filename = BuildFilename();
-
+        string filename = BuildFileName();
         if (!File.Exists(filename))
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(filename)!);
+            Directory.CreateDirectory(Path.GetDirectoryName(filename));
         }
-
-        BinaryFormatter bf = new();
+        BinaryFormatter bf = new BinaryFormatter();
         FileStream file = File.Open(filename, FileMode.OpenOrCreate);
-        wd = new WorldData(world.ChunkChecker, world.ChunkColumns, world.Chunks, world.fpc.transform.position);
+        wd = new WorldData(world.chunkChecker, world.chunkColumns, world.chunks, world.fpc.transform.position);
         bf.Serialize(file, wd);
         file.Close();
-        Debug.Log($"Saving World to File: {filename}");
+        Debug.Log("Saving World to File: " + filename);
     }
 
     public static WorldData Load()
     {
-        string filename = BuildFilename();
-        
+        string filename = BuildFileName();
         if (File.Exists(filename))
         {
             BinaryFormatter bf = new BinaryFormatter();
             FileStream file = File.Open(filename, FileMode.Open);
             wd = new WorldData();
-            wd = bf.Deserialize(file) as WorldData;
+            wd = (WorldData)bf.Deserialize(file);
             file.Close();
-            Debug.Log($"loading World data from File: {filename}");
+            Debug.Log("Loading World from File: " + filename);
             return wd;
         }
-
         return null;
     }
 }

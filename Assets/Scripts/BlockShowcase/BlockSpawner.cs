@@ -1,6 +1,7 @@
 using System;
 using DefaultNamespace;
 using UnityEngine;
+using static MeshUtils;
 using static S2_Quad.BlockAtlas;
 
 public class BlockSpawner : MonoBehaviour
@@ -18,20 +19,14 @@ public class BlockSpawner : MonoBehaviour
         int currentX = 0;
         int currentY = 0;
 
-        EBlockType[] types = (EBlockType[]) Enum.GetValues(typeof(EBlockType));
-        foreach (EBlockType type in types)
+        BlockType[] types = (BlockType[]) Enum.GetValues(typeof(BlockType));
+        foreach (BlockType type in types)
         {
-            TileConfiguration configuration = type switch
-            {
-                EBlockType.ConfiguredGrassCube => grassConfiguration,
-                EBlockType.ConfiguredSandCube => sandConfiguration,
-                _ => null
-            };
 
             SingleBlock newBlock = Instantiate(blockPrefab, new Vector3(currentX + currentX * spacing, currentY + currentY * spacing, 0), Quaternion.identity)
                 .GetComponent<SingleBlock>();
 
-            newBlock.BuildBlock(type, EBlockType.Air, configuration);
+            newBlock.BuildBlock(type, BlockType.AIR);
 
             currentX += 1;
             

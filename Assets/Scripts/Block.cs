@@ -1,73 +1,72 @@
-﻿using System.Collections.Generic;
-using DefaultNamespace;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
-using static MeshUtils;
-using static S2_Quad.BlockAtlas;
 
-public class Block
-{
-    public readonly Mesh mesh;
-    private Vector3 position;
-    private readonly Chunk _parentChunk;
-    
-    private readonly List<EBlockType> _ignoredNeighbourTypes = new() {EBlockType.Air, EBlockType.Water};
+public class Block {
 
-    public Block(EBlockType type, EBlockType hType, Vector3Int offset, Chunk chunk, TileConfiguration tileConfiguration = null)
+    public Mesh mesh;
+    Chunk parentChunk;
+
+    public Block(Vector3 offset, MeshUtils.BlockType type, Chunk chunk, MeshUtils.BlockType htype)
     {
-        _parentChunk = chunk;
-        Vector3Int blockLocalPos = (offset - chunk.location);
+        parentChunk = chunk;
+        Vector3 blockLocalPos = offset - chunk.location;
 
-        if (type == EBlockType.Air) return;
-        
-        List<Mesh> quads = new();
-        bool isTileConfigured = tileConfiguration;
-        if (!HasSolidNeighbour(blockLocalPos.x, blockLocalPos.y - 1, blockLocalPos.z))
+        if (type != MeshUtils.BlockType.AIR)
         {
-            quads.Add(new Quad(EBlockSide.Bottom, offset, isTileConfigured ? tileConfiguration!.bottomTile : type, hType).mesh);
+            List<Quad> quads = new List<Quad>();
+            if (!HasSolidNeighbour((int)blockLocalPos.x, (int)blockLocalPos.y - 1, (int)blockLocalPos.z))
+            {
+                if (type == MeshUtils.BlockType.GRASSSIDE)
+                    quads.Add(new Quad(MeshUtils.BlockSide.BOTTOM, offset, MeshUtils.BlockType.DIRT, htype));
+                else
+                    quads.Add(new Quad(MeshUtils.BlockSide.BOTTOM, offset, type, htype));
+            }
+
+            if (!HasSolidNeighbour((int)blockLocalPos.x, (int)blockLocalPos.y + 1, (int)blockLocalPos.z))
+            {
+                if(type == MeshUtils.BlockType.GRASSSIDE) 
+                    quads.Add(new Quad(MeshUtils.BlockSide.TOP, offset, MeshUtils.BlockType.GRASSTOP, htype));
+                else
+                    quads.Add(new Quad(MeshUtils.BlockSide.TOP, offset, type, htype));
+            }
+
+
+            if (!HasSolidNeighbour((int)blockLocalPos.x - 1, (int)blockLocalPos.y, (int)blockLocalPos.z))
+                quads.Add(new Quad(MeshUtils.BlockSide.LEFT, offset, type, htype));
+            if (!HasSolidNeighbour((int)blockLocalPos.x + 1, (int)blockLocalPos.y, (int)blockLocalPos.z))
+                quads.Add(new Quad(MeshUtils.BlockSide.RIGHT, offset, type, htype));
+            if (!HasSolidNeighbour((int)blockLocalPos.x, (int)blockLocalPos.y, (int)blockLocalPos.z + 1))
+                quads.Add(new Quad(MeshUtils.BlockSide.FRONT, offset, type, htype));
+            if (!HasSolidNeighbour((int)blockLocalPos.x, (int)blockLocalPos.y, (int)blockLocalPos.z - 1))
+                quads.Add(new Quad(MeshUtils.BlockSide.BACK, offset, type, htype));
+
+            if (quads.Count == 0) return;
+
+            Mesh[] sideMeshes = new Mesh[quads.Count];
+            int m = 0;
+            foreach (Quad q in quads)
+            {
+                sideMeshes[m] = q.mesh;
+                m++;
+            }
+
+            mesh = MeshUtils.MergeMeshes(sideMeshes);
+            mesh.name = "Cube_0_0_0";
         }
-
-        if (!HasSolidNeighbour(blockLocalPos.x, blockLocalPos.y + 1, blockLocalPos.z))
-        {
-            quads.Add(new Quad(EBlockSide.Top, offset, isTileConfigured ? tileConfiguration!.topTile : type, hType).mesh);
-        }
-
-        if (!HasSolidNeighbour(blockLocalPos.x - 1, blockLocalPos.y, blockLocalPos.z))
-        {
-            quads.Add(new Quad(EBlockSide.Left, offset, isTileConfigured ? tileConfiguration!.leftTile : type, hType).mesh);
-        }
-
-        if (!HasSolidNeighbour(blockLocalPos.x + 1, blockLocalPos.y, blockLocalPos.z))
-        {
-            quads.Add(new Quad(EBlockSide.Right, offset, isTileConfigured ? tileConfiguration!.rightTile : type, hType).mesh);
-        }
-
-        if (!HasSolidNeighbour(blockLocalPos.x, blockLocalPos.y, blockLocalPos.z + 1))
-        {
-            quads.Add(new Quad(EBlockSide.Front, offset, isTileConfigured ? tileConfiguration!.frontTile : type, hType).mesh);
-        }
-
-        if (!HasSolidNeighbour(blockLocalPos.x, blockLocalPos.y, blockLocalPos.z - 1))
-        {
-            quads.Add(new Quad(EBlockSide.Back, offset, isTileConfigured ? tileConfiguration!.backTile : type, hType).mesh);
-        }
-
-        if (quads.Count == 0) return;
-
-        mesh = MergeMeshes(quads);
-        mesh.name = $"Cube_{position.x}_{position.y}_{position.z}_generated";
     }
 
-    private bool HasSolidNeighbour(int x, int y, int z)
+    public bool HasSolidNeighbour(int x, int y, int z)
     {
-        if (x < 0 || x >= _parentChunk.width
-                  || y < 0 || y >= _parentChunk.height
-                  || z < 0 || z >= _parentChunk.depth) return false;
-
-        return !_ignoredNeighbourTypes.Contains(_parentChunk.chunkData[FlattenXYZ(x, y, z)]);
-    }
-
-    private int FlattenXYZ(int x, int y, int z)
-    {
-        return x + _parentChunk.width * (y + _parentChunk.depth * z);
+        if (x < 0 || x >= parentChunk.width ||
+            y < 0 || y >= parentChunk.height ||
+            z < 0 || z >= parentChunk.depth)
+        {
+            return false;
+        }
+        if(parentChunk.chunkData[x + parentChunk.width * (y + parentChunk.depth * z)] == MeshUtils.BlockType.AIR
+            || parentChunk.chunkData[x + parentChunk.width * (y + parentChunk.depth * z)] == MeshUtils.BlockType.WATER)
+        return false;
+        return true;
     }
 }
