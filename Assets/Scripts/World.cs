@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.Search;
 using UnityEngine;
 using UnityEngine.UI;
 using static S2_Quad.BlockAtlas;
@@ -37,7 +36,7 @@ namespace Scripts
             WorldLayers = worldLayers;
         }
 
-        private void Start()
+        private IEnumerator Start()
         {
             foreach (PerlinGrapher grapher in GetComponentsInChildren<PerlinGrapher>())
             {
@@ -49,9 +48,10 @@ namespace Scripts
 
             if (loadFromFile)
             {
-                StartCoroutine(LoadWorldFromFile());
+                mCamera.SetActive(true);
+                yield return StartCoroutine(LoadWorldFromFile());
             }
-            
+
             StartCoroutine(BuildWorld());
         }
 
@@ -181,6 +181,10 @@ namespace Scripts
             }
 
             int index = 0;
+            int vIndex = 0;
+
+            loadingBar.maxValue = ChunkChecker.Count;
+
             foreach (Vector3Int chunkPos in ChunkChecker)
             {
                 GameObject chunk = Instantiate(chunkPrefab);
@@ -200,14 +204,21 @@ namespace Scripts
                 c.CreateChunk(ChunkDimensions, chunkPos, false);
                 Chunks.Add(chunkPos, c);
                 RedrawChunk(c);
+                c.MeshRenderer.enabled = wd.chunkVisibility[vIndex];
+                vIndex++;
+
+                loadingBar.value += 1;
                 
                 yield return null;
             }
-
+            
             fpc.transform.position = new Vector3(wd.fpcX, wd.fpcY, wd.fpcZ);
             mCamera.SetActive(false);
             fpc.SetActive(true);
             _lastBuildPosition = Vector3Int.CeilToInt(fpc.transform.position);
+            loadingBar.gameObject.SetActive(false);
+
+            // StartCoroutine(BuildWorld());
         }
 
         private void RedrawChunk(Chunk c)
@@ -265,8 +276,10 @@ namespace Scripts
                     ChunkChecker.Add(position);
                     Chunks.Add(position, chunkComponent);
                 }
+
                 
                 Chunks[position].MeshRenderer.enabled = meshEnabled;
+                
             }
 
             ChunkColumns.Add(new Vector2Int(x, z));

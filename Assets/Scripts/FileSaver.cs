@@ -16,6 +16,7 @@ public class WorldData
     public int[] chunkCheckerValue;
     public int[] chunkColumnValues;
     public int[] allChunkData;
+    public bool[] chunkVisibility;
 
     public int fpcX;
     public int fpcY;
@@ -50,6 +51,8 @@ public class WorldData
         index = 0;
         int dimensionsSize = World.ChunkDimensions.x * World.ChunkDimensions.y * World.ChunkDimensions.z;
         allChunkData = new int[chks.Count * dimensionsSize];
+        chunkVisibility = new bool[chks.Count];
+        int vIndex = 0;
         foreach (Chunk c in chks.Values)
         {
             foreach (BlockAtlas.EBlockType blockType in c.chunkData)
@@ -57,6 +60,9 @@ public class WorldData
                 allChunkData[index] = (int)blockType;
                 index++;
             }
+
+            chunkVisibility[vIndex] = c.MeshRenderer.enabled;
+            vIndex++;
         }
 
         fpcX = (int) fpc.x;
