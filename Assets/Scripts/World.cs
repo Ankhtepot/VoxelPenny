@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -47,7 +48,7 @@ public class World : MonoBehaviour
 
     public static PerlinSettings caveSettings;
     public Perlin3DGrapher caves;
-    
+
     public HashSet<Vector3Int> chunkChecker = new HashSet<Vector3Int>();
     public HashSet<Vector2Int> chunkColumns = new HashSet<Vector2Int>();
     public Dictionary<Vector3Int, Chunk> chunks = new Dictionary<Vector3Int, Chunk>();
@@ -93,7 +94,7 @@ public class World : MonoBehaviour
         for (int i = 0; i < wd.chunkColumnValues.Length; i += 2)
         {
             chunkColumns.Add(new Vector2Int(wd.chunkColumnValues[i],
-                                                wd.chunkColumnValues[i + 1]));
+                wd.chunkColumnValues[i + 1]));
         }
 
         int index = 0;
@@ -110,10 +111,11 @@ public class World : MonoBehaviour
 
             for (int i = 0; i < blockCount; i++)
             {
-                c.chunkData[i] = (MeshUtils.BlockType)wd.allChunkData[index];
+                c.chunkData[i] = (MeshUtils.BlockType) wd.allChunkData[index];
                 c.healthData[i] = MeshUtils.BlockType.NOCRACK;
                 index++;
             }
+
             loadingBar.value++;
             c.CreateChunk(chunkDimensions, chunkPos, false);
             chunks.Add(chunkPos, c);
@@ -130,7 +132,6 @@ public class World : MonoBehaviour
         lastBuildPosition = Vector3Int.CeilToInt(fpc.transform.position);
         StartCoroutine(BuildCoordinator());
         StartCoroutine(UpdateWorld());
-
     }
 
     // Start is called before the first frame update
@@ -139,19 +140,19 @@ public class World : MonoBehaviour
         loadingBar.maxValue = worldDimensions.x * worldDimensions.z;
 
         surfaceSettings = new PerlinSettings(surface.heightScale, surface.scale,
-                                     surface.octaves, surface.heightOffset, surface.probability);
+            surface.octaves, surface.heightOffset, surface.probability);
 
         stoneSettings = new PerlinSettings(stone.heightScale, stone.scale,
-                             stone.octaves, stone.heightOffset, stone.probability);
+            stone.octaves, stone.heightOffset, stone.probability);
 
         diamondTSettings = new PerlinSettings(diamondT.heightScale, diamondT.scale,
-                     diamondT.octaves, diamondT.heightOffset, diamondT.probability);
+            diamondT.octaves, diamondT.heightOffset, diamondT.probability);
 
         diamondBSettings = new PerlinSettings(diamondB.heightScale, diamondB.scale,
-                     diamondB.octaves, diamondB.heightOffset, diamondB.probability);
+            diamondB.octaves, diamondB.heightOffset, diamondB.probability);
 
         caveSettings = new PerlinSettings(caves.heightScale, caves.scale,
-             caves.octaves, caves.heightOffset, caves.DrawCutOff);
+            caves.octaves, caves.heightOffset, caves.DrawCutOff);
 
         if (loadFromFile)
             StartCoroutine(LoadWorldFromFile());
@@ -160,9 +161,83 @@ public class World : MonoBehaviour
     }
 
     MeshUtils.BlockType buildType = MeshUtils.BlockType.DIRT;
+
     public void SetBuildType(int type)
     {
         buildType = (MeshUtils.BlockType) type;
+    }
+
+    Vector3Int FromFlat(int i)
+    {
+        return new Vector3Int(i % chunkDimensions.x,
+            (i / chunkDimensions.x) % chunkDimensions.y,
+            i / (chunkDimensions.x * chunkDimensions.y));
+    }
+
+    //Flat[x + WIDTH * (y + DEPTH * z)] = Original[x, y, z]
+    private int ToFlat(Vector3Int v)
+    {
+        return v.x + chunkDimensions.x * (v.y + chunkDimensions.z * v.z);
+    }
+
+    public (Vector3Int, Vector3Int) GetWorldNeighbour(Vector3Int blockIndex, Vector3Int chunkIndex)
+    {
+        Chunk thisChunk = chunks[chunkIndex];
+        int bx = blockIndex.x;
+        int by = blockIndex.y;
+        int bz = blockIndex.z;
+
+        (Vector3Int, Vector3Int) blockNeighbour = GetWorldNeighbour(new Vector3Int(bx, by, bz),
+            Vector3Int.CeilToInt(thisChunk.location));
+        thisChunk = chunks[blockNeighbour.Item2];
+        int i = ToFlat(blockNeighbour.Item1);
+
+        Vector3Int neighbour = chunkIndex;
+        
+        if (bx == chunkDimensions.x)
+        {
+            neighbour = new Vector3Int((int) thisChunk.location.x + chunkDimensions.x,
+                (int) thisChunk.location.y,
+                (int) thisChunk.location.z);
+            bx = 0;
+        }
+        else if (bx == -1)
+        {
+            neighbour = new Vector3Int((int) thisChunk.location.x - chunkDimensions.x,
+                (int) thisChunk.location.y,
+                (int) thisChunk.location.z);
+            bx = chunkDimensions.x - 1;
+        }
+        else if (by == chunkDimensions.y)
+        {
+            neighbour = new Vector3Int((int) thisChunk.location.x,
+                (int) thisChunk.location.y + chunkDimensions.y,
+                (int) thisChunk.location.z);
+            by = 0;
+        }
+        else if (by == -1)
+        {
+            neighbour = new Vector3Int((int) thisChunk.location.x,
+                (int) thisChunk.location.y - chunkDimensions.y,
+                (int) thisChunk.location.z);
+            by = chunkDimensions.y - 1;
+        }
+        else if (bz == chunkDimensions.z)
+        {
+            neighbour = new Vector3Int((int) thisChunk.location.x,
+                (int) thisChunk.location.y,
+                (int) thisChunk.location.z + chunkDimensions.z);
+            bz = 0;
+        }
+        else if (bz == -1)
+        {
+            neighbour = new Vector3Int((int) thisChunk.location.x,
+                (int) thisChunk.location.y,
+                (int) thisChunk.location.z - chunkDimensions.z);
+            bz = chunkDimensions.z - 1;
+        }
+
+        return (new Vector3Int(bx, by, bz), neighbour);
     }
 
     void Update()
@@ -184,72 +259,21 @@ public class World : MonoBehaviour
                 //Debug.Log("Block Location: " + hitBlock.x + "," + hitBlock.y + "," + hitBlock.z);
                 Chunk thisChunk = hit.collider.gameObject.GetComponent<Chunk>();
 
-                int bx = (int)(Mathf.Round(hitBlock.x) - thisChunk.location.x);
-                int by = (int)(Mathf.Round(hitBlock.y) - thisChunk.location.y);
-                int bz = (int)(Mathf.Round(hitBlock.z) - thisChunk.location.z);
-
-                Vector3Int neighbour;
-                if (bx == chunkDimensions.x)
-                {
-                    neighbour = new Vector3Int((int)thisChunk.location.x + chunkDimensions.x,
-                                                (int)thisChunk.location.y,
-                                                 (int)thisChunk.location.z);
-                    thisChunk = chunks[neighbour];
-                    bx = 0;
-                }
-                else if (bx == -1)
-                {
-                    neighbour = new Vector3Int((int)thisChunk.location.x - chunkDimensions.x,
-                                                (int)thisChunk.location.y,
-                                                 (int)thisChunk.location.z);
-                    thisChunk = chunks[neighbour];
-                    bx = chunkDimensions.x - 1;
-                }
-                else if (by == chunkDimensions.y)
-                {
-                    neighbour = new Vector3Int((int)thisChunk.location.x,
-                                                (int)thisChunk.location.y + chunkDimensions.y,
-                                                 (int)thisChunk.location.z);
-                    thisChunk = chunks[neighbour];
-                    by = 0;
-                }
-                else if (by == -1)
-                {
-                    neighbour = new Vector3Int((int)thisChunk.location.x,
-                                                (int)thisChunk.location.y - chunkDimensions.y,
-                                                 (int)thisChunk.location.z);
-                    thisChunk = chunks[neighbour];
-                    by = chunkDimensions.y - 1;
-                }
-                else if (bz == chunkDimensions.z)
-                {
-                    neighbour = new Vector3Int((int)thisChunk.location.x,
-                                                (int)thisChunk.location.y,
-                                                 (int)thisChunk.location.z + chunkDimensions.z);
-                    thisChunk = chunks[neighbour];
-                    bz = 0;
-                }
-                else if (bz == -1)
-                {
-                    neighbour = new Vector3Int((int)thisChunk.location.x,
-                                                (int)thisChunk.location.y,
-                                                 (int)thisChunk.location.z - chunkDimensions.z);
-                    thisChunk = chunks[neighbour];
-                    bz = chunkDimensions.z - 1;
-                }
-
+                int bx = (int) (Mathf.Round(hitBlock.x) - thisChunk.location.x);
+                int by = (int) (Mathf.Round(hitBlock.y) - thisChunk.location.y);
+                int bz = (int) (Mathf.Round(hitBlock.z) - thisChunk.location.z);
 
                 int i = bx + chunkDimensions.x * (by + chunkDimensions.z * bz);
 
                 if (Input.GetMouseButtonDown(0))
                 {
-                    if (MeshUtils.blockTypeHealth[(int)thisChunk.chunkData[i]] != -1)
+                    if (MeshUtils.blockTypeHealth[(int) thisChunk.chunkData[i]] != -1)
                     {
                         if (thisChunk.healthData[i] == MeshUtils.BlockType.NOCRACK)
                             StartCoroutine(HealBlock(thisChunk, i));
                         thisChunk.healthData[i]++;
                         if (thisChunk.healthData[i] == MeshUtils.BlockType.NOCRACK +
-                                                       MeshUtils.blockTypeHealth[(int)thisChunk.chunkData[i]])
+                            MeshUtils.blockTypeHealth[(int) thisChunk.chunkData[i]])
                             thisChunk.chunkData[i] = MeshUtils.BlockType.AIR;
                     }
                 }
@@ -273,6 +297,7 @@ public class World : MonoBehaviour
     }
 
     WaitForSeconds threeSeconds = new WaitForSeconds(3);
+
     public IEnumerator HealBlock(Chunk c, int blockIndex)
     {
         yield return threeSeconds;
@@ -297,10 +322,10 @@ public class World : MonoBehaviour
                 chunkChecker.Add(position);
                 chunks.Add(position, c);
             }
+
             chunks[position].meshRenderer.enabled = meshEnabled;
-            
-            
         }
+
         chunkColumns.Add(new Vector2Int(x, z));
     }
 
@@ -319,7 +344,6 @@ public class World : MonoBehaviour
                 BuildChunkColumn(x * chunkDimensions.x, z * chunkDimensions.z, false);
                 yield return null;
             }
-
         }
 
         for (int z = 0; z < zEnd; z++)
@@ -329,10 +353,7 @@ public class World : MonoBehaviour
                 BuildChunkColumn(x * chunkDimensions.x, z * chunkDimensions.z, false);
                 yield return null;
             }
-
         }
-
-
     }
 
 
@@ -346,7 +367,6 @@ public class World : MonoBehaviour
                 loadingBar.value++;
                 yield return null;
             }
-            
         }
 
         mCamera.SetActive(false);
@@ -354,7 +374,8 @@ public class World : MonoBehaviour
         int xpos = (worldDimensions.x * chunkDimensions.x) / 2;
         int zpos = (worldDimensions.z * chunkDimensions.z) / 2;
 
-        int ypos = (int)MeshUtils.fBM(xpos, zpos, surfaceSettings.octaves, surfaceSettings.scale, surfaceSettings.heightScale, surfaceSettings.heightOffset) + 10;
+        int ypos = (int) MeshUtils.fBM(xpos, zpos, surfaceSettings.octaves, surfaceSettings.scale, surfaceSettings.heightScale,
+            surfaceSettings.heightOffset) + 10;
         fpc.transform.position = new Vector3Int(xpos, ypos, zpos);
         loadingBar.gameObject.SetActive(false);
         fpc.SetActive(true);
@@ -365,6 +386,7 @@ public class World : MonoBehaviour
     }
 
     WaitForSeconds wfs = new WaitForSeconds(0.5f);
+
     IEnumerator UpdateWorld()
     {
         while (true)
@@ -372,11 +394,12 @@ public class World : MonoBehaviour
             if ((lastBuildPosition - fpc.transform.position).magnitude > (chunkDimensions.x))
             {
                 lastBuildPosition = Vector3Int.CeilToInt(fpc.transform.position);
-                int posx = (int)(fpc.transform.position.x / chunkDimensions.x) * chunkDimensions.x;
-                int posz = (int)(fpc.transform.position.z / chunkDimensions.z) * chunkDimensions.z;
+                int posx = (int) (fpc.transform.position.x / chunkDimensions.x) * chunkDimensions.x;
+                int posz = (int) (fpc.transform.position.z / chunkDimensions.z) * chunkDimensions.z;
                 buildQueue.Enqueue(BuildRecursiveWorld(posx, posz, drawRadius));
                 buildQueue.Enqueue(HideColumns(posx, posz));
             }
+
             yield return wfs;
         }
     }
@@ -403,6 +426,7 @@ public class World : MonoBehaviour
                 HideChunkColumn(cc.x, cc.y);
             }
         }
+
         yield return null;
     }
 
@@ -427,5 +451,4 @@ public class World : MonoBehaviour
         buildQueue.Enqueue(BuildRecursiveWorld(x - chunkDimensions.x, z, nextrad));
         yield return null;
     }
-
 }
