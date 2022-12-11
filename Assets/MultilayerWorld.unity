@@ -152,7 +152,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3bcc835137458495b8da0d6b9f3ef259, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  loadFromFile: 1
+  loadFromFile: 0
   chunkPrefab: {fileID: 8025069634560136260, guid: 29cea31fb0bf640ae84d1e37a9eb81d0, type: 3}
   mCamera: {fileID: 963194225}
   fpc: {fileID: 478713138}
@@ -162,6 +162,7 @@ MonoBehaviour:
   diamondT: {fileID: 937063325}
   diamondB: {fileID: 2112035247}
   caves: {fileID: 7458650242894155511, guid: 203d364a0d0df4dc49177c4e23abf6d7, type: 3}
+  tree: {fileID: 7458650242894155511, guid: bcc857eeaf22c4fb69ec76a67ed48f37, type: 3}
 --- !u!4 &250808995
 Transform:
   m_ObjectHideFlags: 0
@@ -2451,7 +2452,7 @@ MonoBehaviour:
   scale: 0.001
   octaves: 8
   heightOffset: -28.09
-  probability: 0.105
+  probability: 0.836
 --- !u!4 &2027438259
 Transform:
   m_ObjectHideFlags: 0

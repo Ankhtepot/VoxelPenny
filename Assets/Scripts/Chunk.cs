@@ -5,6 +5,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Rendering;
+using System.Collections.Concurrent;
 
 public class Chunk : MonoBehaviour
 {
@@ -27,6 +28,7 @@ public class Chunk : MonoBehaviour
 
     CalculateBlockTypes calculateBlockTypes;
     JobHandle jobHandle;
+    public NativeArray<Unity.Mathematics.Random> RandomArray { get; private set; }
 
     struct CalculateBlockTypes : IJobParallelFor
     {
@@ -35,7 +37,7 @@ public class Chunk : MonoBehaviour
         public int width;
         public int height;
         public Vector3 location;
-        public Unity.Mathematics.Random random;
+        public NativeArray<Unity.Mathematics.Random> randoms;
 
         public void Execute(int i)
         {
@@ -43,7 +45,7 @@ public class Chunk : MonoBehaviour
             int y = (i / width) % height + (int)location.y;
             int z = i / (width * height) + (int)location.z;
 
-            random = new Unity.Mathematics.Random(1);
+            var random = randoms[i];
 
             int surfaceHeight = (int)MeshUtils.fBM(x, z, World.surfaceSettings.octaves,
                                                    World.surfaceSettings.scale, World.surfaceSettings.heightScale,
@@ -65,6 +67,10 @@ public class Chunk : MonoBehaviour
                            World.caveSettings.scale, World.caveSettings.heightScale,
                            World.caveSettings.heightOffset);
 
+            int plantTree = (int)MeshUtils.fBM3D(x, y, z, World.treeSettings.octaves,
+               World.treeSettings.scale, World.treeSettings.heightScale,
+               World.treeSettings.heightOffset);
+
             hData[i] = MeshUtils.BlockType.NOCRACK;
 
             if (y == 0)
@@ -81,7 +87,12 @@ public class Chunk : MonoBehaviour
 
             if (surfaceHeight == y)
             {
-                cData[i] = MeshUtils.BlockType.GRASSSIDE;
+                if (plantTree < World.treeSettings.probability && random.NextFloat(1) <= 0.1)
+                {
+                    cData[i] = MeshUtils.BlockType.WOODBASE;
+                }
+                else
+                    cData[i] = MeshUtils.BlockType.GRASSSIDE;
             }
             else if (y < diamondTHeight && y > diamondBHeight && random.NextFloat(1) <= World.diamondTSettings.probability)
                 cData[i] = MeshUtils.BlockType.DIAMOND;
@@ -101,13 +112,23 @@ public class Chunk : MonoBehaviour
         healthData = new MeshUtils.BlockType[blockCount];
         NativeArray<MeshUtils.BlockType> blockTypes = new NativeArray<MeshUtils.BlockType>(chunkData, Allocator.Persistent);
         NativeArray<MeshUtils.BlockType> healthTypes = new NativeArray<MeshUtils.BlockType>(healthData, Allocator.Persistent);
+
+        var randomArray = new Unity.Mathematics.Random[blockCount];
+        var seed = new System.Random();
+
+        for (int i = 0; i < blockCount; ++i)
+            randomArray[i] = new Unity.Mathematics.Random((uint)seed.Next());
+
+        RandomArray = new NativeArray<Unity.Mathematics.Random>(randomArray, Allocator.Persistent);
+
         calculateBlockTypes = new CalculateBlockTypes()
         {
             cData = blockTypes,
             hData = healthTypes,
             width = width,
             height = height,
-            location = location
+            location = location,
+            randoms = RandomArray
         };
 
         jobHandle = calculateBlockTypes.Schedule(chunkData.Length, 64);
@@ -116,6 +137,7 @@ public class Chunk : MonoBehaviour
         calculateBlockTypes.hData.CopyTo(healthData);
         blockTypes.Dispose();
         healthTypes.Dispose();
+        RandomArray.Dispose();
     }
 
     // Start is called before the first frame update
@@ -155,7 +177,9 @@ public class Chunk : MonoBehaviour
             {
                 for (int x = 0; x < width; x++)
                 {
-                    blocks[x, y, z] = new Block(new Vector3(x, y, z) + location, chunkData[x + width * (y + depth * z)], this, healthData[x + width * (y + depth * z)]);
+                    blocks[x, y, z] = new Block(new Vector3(x, y, z) + location, 
+					chunkData[x + width * (y + depth * z)], this, 
+					healthData[x + width * (y + depth * z)]);
                     if (blocks[x, y, z].mesh != null)
                     {
                         inputMeshes.Add(blocks[x, y, z].mesh);
