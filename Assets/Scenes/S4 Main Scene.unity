@@ -25221,6 +25221,7 @@ MonoBehaviour:
   diamondT: {fileID: 562020579}
   diamondB: {fileID: 232654785}
   caves: {fileID: 487480018}
+  tree: {fileID: 7458650242894155511, guid: bcc857eeaf22c4fb69ec76a67ed48f37, type: 3}
 --- !u!4 &533708457
 Transform:
   m_ObjectHideFlags: 0
