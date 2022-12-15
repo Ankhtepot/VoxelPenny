@@ -6,6 +6,7 @@ using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Rendering;
 using System.Collections.Concurrent;
+using static MeshUtils;
 
 public class Chunk : MonoBehaviour
 {
@@ -22,8 +23,8 @@ public class Chunk : MonoBehaviour
     //x = i % WIDTH
     //y = (i / WIDTH) % HEIGHT
     //z = i / (WIDTH * HEIGHT )
-    public MeshUtils.BlockType[] chunkData;
-    public MeshUtils.BlockType[] healthData;
+    public BlockType[] chunkData;
+    public BlockType[] healthData;
     public MeshRenderer meshRenderer;
 
     CalculateBlockTypes calculateBlockTypes;
@@ -32,8 +33,8 @@ public class Chunk : MonoBehaviour
 
     struct CalculateBlockTypes : IJobParallelFor
     {
-        public NativeArray<MeshUtils.BlockType> cData;
-        public NativeArray<MeshUtils.BlockType> hData;
+        public NativeArray<BlockType> cData;
+        public NativeArray<BlockType> hData;
         public int width;
         public int height;
         public Vector3 location;
@@ -47,41 +48,41 @@ public class Chunk : MonoBehaviour
 
             var random = randoms[i];
 
-            int surfaceHeight = (int)MeshUtils.fBM(x, z, World.surfaceSettings.octaves,
+            int surfaceHeight = (int)fBM(x, z, World.surfaceSettings.octaves,
                                                    World.surfaceSettings.scale, World.surfaceSettings.heightScale,
                                                    World.surfaceSettings.heightOffset);
 
-            int stoneHeight = (int)MeshUtils.fBM(x, z, World.stoneSettings.octaves,
+            int stoneHeight = (int)fBM(x, z, World.stoneSettings.octaves,
                                                    World.stoneSettings.scale, World.stoneSettings.heightScale,
                                                    World.stoneSettings.heightOffset);
 
-            int diamondTHeight = (int)MeshUtils.fBM(x, z, World.diamondTSettings.octaves,
+            int diamondTHeight = (int)fBM(x, z, World.diamondTSettings.octaves,
                                        World.diamondTSettings.scale, World.diamondTSettings.heightScale,
                                        World.diamondTSettings.heightOffset);
 
-            int diamondBHeight = (int)MeshUtils.fBM(x, z, World.diamondBSettings.octaves,
+            int diamondBHeight = (int)fBM(x, z, World.diamondBSettings.octaves,
                            World.diamondBSettings.scale, World.diamondBSettings.heightScale,
                            World.diamondBSettings.heightOffset);
 
-            int digCave = (int)MeshUtils.fBM3D(x, y, z, World.caveSettings.octaves,
+            int digCave = (int)fBM3D(x, y, z, World.caveSettings.octaves,
                            World.caveSettings.scale, World.caveSettings.heightScale,
                            World.caveSettings.heightOffset);
 
-            int plantTree = (int)MeshUtils.fBM3D(x, y, z, World.treeSettings.octaves,
+            int plantTree = (int)fBM3D(x, y, z, World.treeSettings.octaves,
                World.treeSettings.scale, World.treeSettings.heightScale,
                World.treeSettings.heightOffset);
 
-            hData[i] = MeshUtils.BlockType.NOCRACK;
+            hData[i] = BlockType.NOCRACK;
 
             if (y == 0)
             {
-                cData[i] = MeshUtils.BlockType.BEDROCK;
+                cData[i] = BlockType.BEDROCK;
                 return;
             }
 
             if (digCave < World.caveSettings.probability)
             {
-                cData[i] = MeshUtils.BlockType.AIR;
+                cData[i] = BlockType.AIR;
                 return;
             }
 
@@ -89,29 +90,29 @@ public class Chunk : MonoBehaviour
             {
                 if (plantTree < World.treeSettings.probability && random.NextFloat(1) <= 0.1)
                 {
-                    cData[i] = MeshUtils.BlockType.WOODBASE;
+                    cData[i] = BlockType.WOODBASE;
                 }
                 else
-                    cData[i] = MeshUtils.BlockType.GRASSSIDE;
+                    cData[i] = BlockType.GRASSSIDE;
             }
             else if (y < diamondTHeight && y > diamondBHeight && random.NextFloat(1) <= World.diamondTSettings.probability)
-                cData[i] = MeshUtils.BlockType.DIAMOND;
+                cData[i] = BlockType.DIAMOND;
             else if (y < stoneHeight && random.NextFloat(1) <= World.stoneSettings.probability)
-                cData[i] = MeshUtils.BlockType.STONE;
+                cData[i] = BlockType.STONE;
             else if (y < surfaceHeight)
-                cData[i] = MeshUtils.BlockType.DIRT;
+                cData[i] = BlockType.DIRT;
             else
-                cData[i] = MeshUtils.BlockType.AIR;
+                cData[i] = BlockType.AIR;
         }
     }
 
     void BuildChunk()
     {
         int blockCount = width * depth * height;
-        chunkData = new MeshUtils.BlockType[blockCount];
-        healthData = new MeshUtils.BlockType[blockCount];
-        NativeArray<MeshUtils.BlockType> blockTypes = new NativeArray<MeshUtils.BlockType>(chunkData, Allocator.Persistent);
-        NativeArray<MeshUtils.BlockType> healthTypes = new NativeArray<MeshUtils.BlockType>(healthData, Allocator.Persistent);
+        chunkData = new BlockType[blockCount];
+        healthData = new BlockType[blockCount];
+        NativeArray<BlockType> blockTypes = new NativeArray<BlockType>(chunkData, Allocator.Persistent);
+        NativeArray<BlockType> healthTypes = new NativeArray<BlockType>(healthData, Allocator.Persistent);
 
         var randomArray = new Unity.Mathematics.Random[blockCount];
         var seed = new System.Random();
@@ -177,9 +178,7 @@ public class Chunk : MonoBehaviour
             {
                 for (int x = 0; x < width; x++)
                 {
-                    blocks[x, y, z] = new Block(new Vector3(x, y, z) + location, 
-					chunkData[x + width * (y + depth * z)], this, 
-					healthData[x + width * (y + depth * z)]);
+                    blocks[x, y, z] = new Block(new Vector3(x, y, z) + location, chunkData[x + width * (y + depth * z)], this, healthData[x + width * (y + depth * z)]);
                     if (blocks[x, y, z].mesh != null)
                     {
                         inputMeshes.Add(blocks[x, y, z].mesh);
