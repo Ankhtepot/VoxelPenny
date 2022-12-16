@@ -158,13 +158,13 @@ public class World : MonoBehaviour {
         buildType = (MeshUtils.BlockType)type;
     }
 
-    Vector3Int FromFlat(int i) {
+    public static Vector3Int FromFlat(int i) {
         return new Vector3Int(i % chunkDimensions.x,
                                 (i / chunkDimensions.x) % chunkDimensions.y,
                                 i / (chunkDimensions.x * chunkDimensions.y));
     }
 
-    int ToFlat(Vector3Int v) {
+    public static int ToFlat(Vector3Int v) {
         return v.x + chunkDimensions.x * (v.y + chunkDimensions.z * v.z);
     }
 

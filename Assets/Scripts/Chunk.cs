@@ -88,7 +88,7 @@ public class Chunk : MonoBehaviour
 
             if (surfaceHeight == y)
             {
-                if (plantTree < World.treeSettings.probability && random.NextFloat(1) <= 0.1)
+                if (plantTree < World.treeSettings.probability && random.NextFloat(1) <= 0.2)
                 {
                     cData[i] = BlockType.WOODBASE;
                 }
@@ -111,8 +111,8 @@ public class Chunk : MonoBehaviour
         int blockCount = width * depth * height;
         chunkData = new BlockType[blockCount];
         healthData = new BlockType[blockCount];
-        NativeArray<BlockType> blockTypes = new NativeArray<BlockType>(chunkData, Allocator.Persistent);
-        NativeArray<BlockType> healthTypes = new NativeArray<BlockType>(healthData, Allocator.Persistent);
+        NativeArray<BlockType> blockTypes = new(chunkData, Allocator.Persistent);
+        NativeArray<BlockType> healthTypes = new(healthData, Allocator.Persistent);
 
         var randomArray = new Unity.Mathematics.Random[blockCount];
         var seed = new System.Random();
@@ -139,7 +139,36 @@ public class Chunk : MonoBehaviour
         blockTypes.Dispose();
         healthTypes.Dispose();
         RandomArray.Dispose();
+
+        BuildTrees();
     }
+
+    private (Vector3Int, BlockType)[] treeDesign = new (Vector3Int, BlockType)[]
+    {
+        (new Vector3Int(0,1,0), BlockType.WOOD),
+        (new Vector3Int(0,2,0), BlockType.LEAVES),
+    };
+    
+    private void BuildTrees()
+    {
+        for (int i = 0; i < chunkData.Length; i++)
+        {
+            if (chunkData[i] == BlockType.WOODBASE)
+            {
+                foreach ((Vector3Int, BlockType) valueTuple in treeDesign)
+                {
+                    Vector3Int blockPos = World.FromFlat(i) + valueTuple.Item1;
+                    int bIndex = World.ToFlat(blockPos);
+                    if (bIndex >= 0 && bIndex < chunkData.Length)
+                    {
+                        chunkData[bIndex] = valueTuple.Item2;
+                        healthData[bIndex] = BlockType.NOCRACK;
+                    }
+                }
+                
+            }
+        }
+    } 
 
     // Start is called before the first frame update
     void Start()
