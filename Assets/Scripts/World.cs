@@ -110,7 +110,7 @@ public class World : MonoBehaviour {
             c.CreateChunk(chunkDimensions, chunkPos, false);
             chunks.Add(chunkPos, c);
             RedrawChunk(c);
-            c.meshRenderer.enabled = wd.chunkVisibility[vIndex];
+            c.meshRendererSolid.enabled = wd.chunkVisibility[vIndex];
             vIndex++;
             yield return null;
         }
@@ -358,7 +358,7 @@ public class World : MonoBehaviour {
                 chunkChecker.Add(position);
                 chunks.Add(position, c);
             }
-            chunks[position].meshRenderer.enabled = meshEnabled;
+            chunks[position].meshRendererSolid.enabled = meshEnabled;
 
 
         }
@@ -435,7 +435,7 @@ public class World : MonoBehaviour {
         for (int y = 0; y < worldDimensions.y; y++) {
             Vector3Int pos = new Vector3Int(x, y * chunkDimensions.y, z);
             if (chunkChecker.Contains(pos)) {
-                chunks[pos].meshRenderer.enabled = false;
+                chunks[pos].meshRendererSolid.enabled = false;
             }
         }
     }
