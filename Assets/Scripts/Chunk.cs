@@ -5,7 +5,6 @@ using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.Serialization;
 using static MeshUtils;
 
 public class Chunk : MonoBehaviour
@@ -239,8 +238,9 @@ public class Chunk : MonoBehaviour
             fluidMesh.transform.parent = gameObject.transform;
             mff = fluidMesh.AddComponent<MeshFilter>();
             mrf = fluidMesh.AddComponent<MeshRenderer>();
+            fluidMesh.AddComponent<UVScroller>();
             meshRendererFluid = mrf;
-            mrf.material = atlas;
+            mrf.material = fluid;
         }
         else
         {
