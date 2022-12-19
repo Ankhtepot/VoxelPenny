@@ -212,15 +212,16 @@ public class Chunk : MonoBehaviour
         height = (int)dimensions.y;
         depth = (int)dimensions.z;
 
-        MeshFilter mfs; // solid
+        MeshFilter mfs; //solid
         MeshRenderer mrs;
-        MeshFilter mff; // fluid
+        MeshFilter mff; //fluid
         MeshRenderer mrf;
 
-        if (solidMesh is null)
+
+        if (solidMesh == null)
         {
-            solidMesh = solidMesh = new GameObject("Solid");
-            solidMesh.transform.parent = gameObject.transform;
+            solidMesh = new GameObject("Solid");
+            solidMesh.transform.parent = this.gameObject.transform;
             mfs = solidMesh.AddComponent<MeshFilter>();
             mrs = solidMesh.AddComponent<MeshRenderer>();
             meshRendererSolid = mrs;
@@ -231,14 +232,13 @@ public class Chunk : MonoBehaviour
             mfs = solidMesh.GetComponent<MeshFilter>();
             DestroyImmediate(solidMesh.GetComponent<Collider>());
         }
-        
-        if (fluidMesh is null)
+
+        if (fluidMesh == null)
         {
-            fluidMesh = solidMesh = new GameObject("Fluid");
+            fluidMesh = new GameObject("Fluid");
             fluidMesh.transform.parent = gameObject.transform;
             mff = fluidMesh.AddComponent<MeshFilter>();
             mrf = fluidMesh.AddComponent<MeshRenderer>();
-            fluidMesh.AddComponent<UVScroller>();
             meshRendererFluid = mrf;
             mrf.material = fluid;
         }
@@ -328,6 +328,7 @@ public class Chunk : MonoBehaviour
             {
                 mff.mesh = newMesh;
                 MeshCollider collider = fluidMesh.AddComponent<MeshCollider>();
+                fluidMesh.layer = 4; // water
                 collider.sharedMesh = mff.mesh;
             }
         }
